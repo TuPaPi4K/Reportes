@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Categorías | Pollo Na'Guara</title>
+    <link rel="stylesheet" href="inventario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* Estilos para notificaciones (Toast) */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-left: 4px solid;
+        }
+        .toast-success { background: #28a745; border-left-color: #1e7e34; }
+        .toast-error { background: #dc3545; border-left-color: #c82333; }
+        .toast-info { background: #17a2b8; border-left-color: #138496; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="inventario-container">
+        <div class="breadcrumb">
+            <a href="../index.html">Dashboard</a> / 
+            <span>Categorías</span>
+        </div>
+
+        <section class="header-section">
+            <h1><i class="fa-solid fa-tags"></i> Gestión de Categorías</h1>
+            <p>Administra las clasificaciones de productos disponibles en el sistema.</p>
+        </section>
+
+        <section class="cards">
+            <div class="card">
+                <i class="fa-solid fa-layer-group"></i>
+                <div class="card-content">
+                    <h3 id="card-total-categorias">0</h3>
+                    <p>Total Categorías</p>
+                </div>
+            </div>
+            <div class="card">
+                <i class="fa-solid fa-check-circle"></i>
+                <div class="card-content">
+                    <h3 id="card-activas">0</h3>
+                    <p>Activas</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="table-section">
+            <div class="table-header">
+                <h2><i class="fa-solid fa-list"></i> Lista de Categorías</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" placeholder="Buscar categoría..." id="search-input">
+                    </div>
+                    <div class="items-per-page">
+                        <button class="btn btn-primary btn-nuevo">
+                            <i class="fa-solid fa-plus"></i> Nueva Categoría
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Productos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="categorias-body">
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px;">
+                                <div class="loading-spinner">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                    Cargando datos...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 15px; text-align: right; color: #6c757d; font-size: 0.9rem;">
+                <span id="registros-info">Mostrando 0 registros</span>
+            </div>
+        </section>
+
+        <section class="form-section" id="form-section">
+            <h2><i class="fa-solid fa-plus-circle"></i> Registrar / Editar Categoría</h2>
+            <form id="categoria-form">
+                <input type="hidden" id="categoria-id">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="categoria-nombre">Nombre de la Categoría *</label>
+                        <input type="text" id="categoria-nombre" class="form-control" required placeholder="Ej: Bebidas">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoria-descripcion">Descripción</label>
+                        <input type="text" id="categoria-descripcion" class="form-control" placeholder="Breve descripción...">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary btn-cancelar" id="btn-cancelar">
+                        <i class="fa-solid fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <script src="../auth-check.js"></script>
+    <script src="categorias.js"></script>
+</body>
+</html>

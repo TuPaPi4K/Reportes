@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - Sistema Na'Guara</title>
+    <link rel="stylesheet" href="GestionU.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-full">
+    <main class="container mx-auto p-6 max-w-7xl">
+        <!-- Header -->
+        <header class="card p-8 mb-8 fade-in">
+            <div class="breadcrumb">
+                <a href="../index.html">Dashboard</a>
+            </div>
+            <section class="flex items-center justify-between">
+                <hgroup>
+                    <h1 class="text-4xl font-bold gradient-text mb-2">
+                        <i class="fas fa-users-cog mr-3"></i>
+                        Gestión de Usuarios
+                    </h1>
+                    <p class="text-gray-600 text-lg">Control de accesos y permisos del sistema</p>
+                    <!-- Mostrar rol del usuario actual -->
+                    <div class="mt-2">
+    <span id="user-role" class="role-badge">Cargando...</span>
+</div>
+                </hgroup>
+            </section>
+        </header>
+
+        <!-- Estadísticas Rápidas - ACTUALIZADO -->
+        <section class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <article class="card p-6 text-center fade-in">
+                <div class="text-3xl font-bold text-purple-600 mb-2" id="total-users">5</div>
+                <div class="text-gray-600">Total Usuarios</div>
+            </article>
+            <article class="card p-6 text-center fade-in">
+                <div class="text-3xl font-bold text-green-600 mb-2" id="active-users">4</div>
+                <div class="text-gray-600">Usuarios Activos</div>
+            </article>
+            <article class="card p-6 text-center fade-in">
+                <div class="text-3xl font-bold text-red-600 mb-2" id="super-admin-users">1</div>
+                <div class="text-gray-600">Super Admins</div>
+            </article>
+            <article class="card p-6 text-center fade-in">
+                <div class="text-3xl font-bold text-purple-600 mb-2" id="admin-users">2</div>
+                <div class="text-gray-600">Administradores</div>
+            </article>
+            <article class="card p-6 text-center fade-in">
+                <div class="text-3xl font-bold text-blue-600 mb-2" id="vendor-users">2</div>
+                <div class="text-gray-600">Vendedores Activos</div>
+            </article>
+        </section>
+
+        <!-- Controles Principales - ACTUALIZADO -->
+        <section class="card p-6 mb-8 fade-in">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-4">
+                    <button id="add-user" class="btn-primary">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Nuevo Usuario
+                    </button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" id="search-users" placeholder="Buscar usuarios..." 
+                               class="input-field pl-12 w-64">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <select id="filter-role" class="input-field">
+                        <option value="">Todos los roles</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="admin">Administrador</option>
+                        <option value="vendor">Vendedor</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla de Usuarios -->
+        <section class="card overflow-hidden fade-in">
+            <div class="overflow-x-auto">
+                <table class="table w-full">
+                    <caption class="sr-only">Lista de usuarios del sistema</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <input type="checkbox" id="select-all" class="permission-checkbox">
+                            </th>
+                            <th scope="col">Usuario</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Fecha Creación</th>
+                            <th scope="col">Último Acceso</th> 
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Los usuarios se cargarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Nuevo/Editar Usuario - ACTUALIZADO -->
+    <div id="user-modal" class="modal hidden">
+        <div class="modal-content">
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold gradient-text" id="user-modal-title">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Nuevo Usuario
+                </h2>
+                <button id="close-user-modal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            
+            <form id="user-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="user-name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre Completo *
+                        </label>
+                        <input type="text" id="user-name" name="name" class="input-field w-full" required>
+                    </div>
+                    <div>
+                        <label for="user-email" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nombre de usuario *
+                        </label>
+                        <input type="text" id="username" name="username" class="input-field w-full" required>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="user-role" class="block text-sm font-medium text-gray-700 mb-2">
+                            Rol del Usuario *
+                        </label>
+                        <select id="user-role-select" name="role" class="input-field w-full" required>
+
+                            <option value="">Seleccionar rol</option>
+                            <option value="vendor">Vendedor</option>
+                            <option value="admin">Administrador</option>
+                            <!-- La opción Super Admin se agregará dinámicamente en JavaScript -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="user-status" class="block text-sm font-medium text-gray-700 mb-2">
+                            Estado
+                        </label>
+                        <select id="user-status" name="status" class="input-field w-full">
+                            <option value="active">Activo</option>
+                            <option value="inactive">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="password-section">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="user-password" class="block text-sm font-medium text-gray-700 mb-2">
+                                Contraseña *
+                            </label>
+                            <input type="password" id="user-password" name="password" class="input-field w-full">
+                        </div>
+                        <div>
+                            <label for="user-password-confirm" class="block text-sm font-medium text-gray-700 mb-2">
+                                Confirmar Contraseña *
+                            </label>
+                            <input type="password" id="user-password-confirm" name="password_confirm" class="input-field w-full">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-4 pt-6 border-t">
+                    <button type="button" id="cancel-user" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Degradar a Vendedor (NUEVO) -->
+    <div id="demote-modal" class="modal hidden">
+        <div class="modal-content max-w-md">
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-orange-600">
+                    <i class="fas fa-user-slash mr-2"></i>
+                    Degradar a Vendedor
+                </h2>
+                <button id="close-demote-modal" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            
+            <div class="space-y-4">
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <p class="text-orange-800 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Advertencia:</strong> Esta acción removerá todos los privilegios de administrador.
+                    </p>
+                </div>
+                
+                <p class="text-gray-700">
+                    Degradar a: <span id="demote-user-name" class="font-semibold"></span>
+                </p>
+                
+                <div>
+                    <label for="demote-password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Clave de Confirmación *
+                    </label>
+                    <input type="password" id="demote-password" class="input-field w-full" 
+                           placeholder="Ingrese la clave de super administrador" required>
+                    <p class="text-xs text-gray-500 mt-1">Se requiere clave de seguridad para esta acción</p>
+                </div>
+                
+                <div id="demote-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-red-800 text-sm" id="demote-error-text"></p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-demote" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                    Cancelar
+                </button>
+                <button id="confirm-demote" class="btn-warning">
+                    <i class="fas fa-user-slash mr-2"></i>
+                    Degradar a Vendedor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Cambiar Contraseña -->
+    <div id="password-modal" class="modal hidden">
+        <div class="modal-content max-w-md">
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-blue-600">
+                    <i class="fas fa-key mr-2"></i>
+                    Cambiar Contraseña
+                </h2>
+                <button id="close-password-modal" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            
+            <form id="password-form" class="space-y-4">
+                <input type="hidden" id="password-user-id">
+                
+                <div>
+                    <label for="new-password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Nueva Contraseña *
+                    </label>
+                    <input type="password" id="new-password" class="input-field w-full" required 
+                           minlength="6" placeholder="Mínimo 6 caracteres">
+                </div>
+                
+                <div>
+                    <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Confirmar Contraseña *
+                    </label>
+                    <input type="password" id="confirm-password" class="input-field w-full" required 
+                           placeholder="Repite la contraseña">
+                </div>
+                
+                <div id="password-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-red-800 text-sm" id="password-error-text"></p>
+                </div>
+            </form>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-password" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                    Cancelar
+                </button>
+                <button id="save-password" class="btn-primary">
+                    <i class="fas fa-save mr-2"></i>
+                    Cambiar Contraseña
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Promover a Administrador -->
+    <div id="promote-modal" class="modal hidden">
+        <div class="modal-content max-w-md">
+            <header class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-purple-600">
+                    <i class="fas fa-user-shield mr-2"></i>
+                    Promover a Administrador
+                </h2>
+                <button id="close-promote-modal" class="text-gray-500 hover:text-gray-700 text-xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </header>
+            
+            <div class="space-y-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p class="text-yellow-800 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Advertencia:</strong> Esta acción otorgará permisos completos de administrador.
+                    </p>
+                </div>
+                
+                <p class="text-gray-700">
+                    Promover a: <span id="promote-user-name" class="font-semibold"></span>
+                </p>
+                
+                <div>
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-2">
+                        Clave de Confirmación *
+                    </label>
+                    <input type="password" id="admin-password" class="input-field w-full" 
+                           placeholder="Ingrese la clave de administrador" required>
+                    <p class="text-xs text-gray-500 mt-1">Se requiere clave de seguridad para esta acción</p>
+                </div>
+                
+                <div id="promote-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3">
+                    <p class="text-red-800 text-sm" id="promote-error-text"></p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-promote" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                    Cancelar
+                </button>
+                <button id="confirm-promote" class="btn-primary">
+                    <i class="fas fa-user-shield mr-2"></i>
+                    Promover a Admin
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmación -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content max-w-md">
+            <header class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-orange-600">
+                    <i class="fas fa-question-circle mr-2"></i>
+                    Confirmar Acción
+                </h2>
+                <button id="close-confirm-modal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </header>
+            <div class="mb-6">
+                <p id="confirm-title" class="text-gray-800 font-semibold mb-2"></p>
+                <p id="confirm-message" class="text-gray-600 text-sm"></p>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-confirm" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all">
+                    Cancelar
+                </button>
+                <button id="accept-confirm" class="btn-danger">
+                    <i class="fas fa-check mr-2"></i>
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../auth-check.js"></script>
+    <script src="GestionU.js"></script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - Sistema Na'Guara</title>
+    <link rel="stylesheet" href="configuracion.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="min-h-full">
+    <main class="container mx-auto p-6 max-w-7xl">
+        <!-- Header -->
+        <header class="card p-6 mb-6 fade-in">
+            <div class="breadcrumb">
+                <a href="../index.html">Dashboard</a>
+                <i class="fas fa-chevron-right"></i>
+                <span>Configuración</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-cog mr-3 text-purple-600"></i>
+                        Configuración del Sistema
+                    </h1>
+                    <p class="text-gray-600">Personaliza y configura tu sistema Na'Guara</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-500">Sistema Na'Guara</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Navegación Lateral -->
+            <aside class="lg:col-span-1">
+                <div class="card p-6 fade-in sidebar-nav">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-list mr-2"></i>
+                        Secciones
+                    </h3>
+                    <nav>
+                        <div class="nav-item active" data-section="empresa">
+                            <i class="fas fa-building"></i>
+                            <span>Mi Empresa</span>
+                        </div>
+                        <div class="nav-item" data-section="categorias">
+                            <i class="fas fa-tags"></i>
+                            <span>Categorías</span>
+                        </div>
+                        <div class="nav-item" data-section="negocio">
+                            <i class="fas fa-store"></i>
+                            <span>Configuración de Negocio</span>
+                        </div>
+                        <div class="nav-item" data-section="tasa-cambio">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Tasa de Cambio</span>
+                        </div>
+                        <div class="nav-item" data-section="backup">
+                            <i class="fas fa-database"></i>
+                            <span>Copias de Seguridad</span>
+                        </div>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Contenido Principal -->
+            <section class="lg:col-span-3">
+                <!-- Sección Mi Empresa -->
+                <div id="section-empresa" class="config-section">
+                    <div class="card p-6 mb-6 fade-in">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                            <i class="fas fa-building mr-3 text-purple-600"></i>
+                            Información de Mi Empresa
+                        </h3>
+
+                        <form id="empresa-form">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label for="empresa-nombre">Nombre de la Empresa *</label>
+                                    <input type="text" id="empresa-nombre" class="input-field" required>
+                                    <div class="help-text">Este nombre aparecerá en facturas y reportes</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="empresa-rif">RIF *</label>
+                                    <input type="text" id="empresa-rif" class="input-field" required>
+                                    <div class="help-text">Registro de Información Fiscal</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="empresa-direccion">Dirección</label>
+                                    <textarea id="empresa-direccion" class="input-field" rows="3"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="empresa-telefono">Teléfono</label>
+                                    <input type="tel" id="empresa-telefono" class="input-field">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="empresa-email">Email</label>
+                                    <input type="email" id="empresa-email" class="input-field">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="empresa-mensaje">Mensaje en Facturas</label>
+                                    <textarea id="empresa-mensaje" class="input-field" rows="2"></textarea>
+                                    <div class="help-text">Mensaje que aparece al pie de las facturas</div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end mt-6">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save mr-2"></i>
+                                    Guardar Información
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Sección Categorías -->
+                <div id="section-categorias" class="config-section hidden">
+                    <div class="card p-6 mb-6 fade-in">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                            <i class="fas fa-tags mr-3 text-purple-600"></i>
+                            Gestión de Categorías
+                        </h3>
+
+                        <!-- Agregar Categoría -->
+                        <div class="mb-8">
+                            <h4 class="text-lg font-medium text-gray-700 mb-4">Agregar Nueva Categoría</h4>
+                            <div class="flex items-center space-x-4 mb-4">
+                                <input type="text" id="nueva-categoria" class="input-field flex-1" placeholder="Nombre de la categoría">
+                                <textarea id="categoria-descripcion" class="input-field flex-1" placeholder="Descripción (opcional)" rows="1"></textarea>
+                                <button id="add-categoria" class="btn-primary">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Agregar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Categorías -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 mb-4">Categorías Existentes</h4>
+                            <div id="categorias-list" class="space-y-3">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Cargando categorías...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Configuración de Negocio -->
+                <div id="section-negocio" class="config-section hidden">
+                    <div class="card p-6 mb-6 fade-in">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                            <i class="fas fa-store mr-3 text-purple-600"></i>
+                            Configuración de Negocio
+                        </h3>
+
+                        <!-- Métodos de Pago -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div>
+            <span>Efectivo</span>
+            <span class="status-text text-sm text-green-600 font-medium ml-2">Habilitado</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="pago-efectivo" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div>
+            <span>Tarjeta</span>
+            <span class="status-text text-sm text-green-600 font-medium ml-2">Habilitado</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="pago-tarjeta" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div>
+            <span>Transferencia</span>
+            <span class="status-text text-sm text-green-600 font-medium ml-2">Habilitado</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="pago-transferencia" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+        <div>
+            <span>Pago Móvil</span>
+            <span class="status-text text-sm text-green-600 font-medium ml-2">Habilitado</span>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="pago-movil" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+</div>
+
+                        <!-- Impuestos -->
+                        <div class="mb-8">
+                            <h4 class="text-lg font-medium text-gray-700 mb-4">Configuración de Impuestos</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label for="iva-rate">Tasa de IVA (%)</label>
+                                    <input type="number" id="iva-rate" class="input-field" value="16" min="0" max="100" step="0.01">
+                                    <div class="help-text">Impuesto al Valor Agregado</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end mt-6">
+                            <button id="guardar-config-negocio" class="btn-primary">
+                                <i class="fas fa-save mr-2"></i>
+                                Guardar Configuración
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Tasa de Cambio -->
+<div id="section-tasa-cambio" class="config-section hidden">
+    <div class="card p-6 mb-6 fade-in">
+        <h3 class="text-xl font-semibold text-gray-800 mb-6">
+            <i class="fas fa-exchange-alt mr-3 text-purple-600"></i>
+            Gestión de Tasa de Cambio
+        </h3>
+
+        <!-- Tasa Actual -->
+        <div class="mb-8">
+            <h4 class="text-lg font-medium text-gray-700 mb-4">Tasa de Cambio Actual</h4>
+            
+            <!-- AGREGAR ESTE ALERTA INFORMATIVA -->
+            <div class="alert alert-info mb-4" id="tasa-manual-status">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span id="tasa-status-text">Usando tasa automática desde API</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div class="form-group">
+                    <label for="tasa-actual">Tasa BS/USD Actual</label>
+                    <div class="flex items-center space-x-3">
+                        <input type="number" id="tasa-actual" class="input-field" step="0.01" min="0" readonly>
+                        <span class="text-gray-500 font-medium">BS</span>
+                    </div>
+                    <div class="help-text" id="tasa-fuente">Cargando...</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tasa-manual">Tasa Manual BS/USD</label>
+                    <div class="flex items-center space-x-3">
+                        <input type="number" id="tasa-manual" class="input-field" step="0.01" min="0" placeholder="0.00">
+                        <span class="text-gray-500 font-medium">BS</span>
+                    </div>
+                    <div class="help-text">Establecer tasa manualmente</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="tasa-activa">Estado</label>
+                    <div class="flex items-center space-x-3 mt-2">
+                        <label class="switch">
+                            <input type="checkbox" id="tasa-activa" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <span class="text-sm text-gray-600" id="tasa-estado">Activa</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <button id="actualizar-tasa-api" class="btn-primary">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Actualizar desde API
+                </button>
+                <button id="guardar-tasa-manual" class="btn-success">
+                    <i class="fas fa-save mr-2"></i>
+                    Guardar Tasa Manual
+                </button>
+                
+                <!-- 🆕 NUEVO BOTÓN PARA DESACTIVAR TASA MANUAL -->
+                <button id="desactivar-tasa-manual" class="btn-warning hidden">
+                    <i class="fas fa-times mr-2"></i>
+                    Desactivar Tasa Manual
+                </button>
+                
+                <button id="forzar-actualizacion" class="btn-warning">
+                    <i class="fas fa-bolt mr-2"></i>
+                    Forzar Actualización
+                </button>
+            </div>
+        </div>
+
+        <!-- Historial de Tasas -->
+        <div>
+            <h4 class="text-lg font-medium text-gray-700 mb-4">Historial de Tasas (Últimos 30 días)</h4>
+            <div id="tasa-historial" class="space-y-3">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                    <p>Cargando historial...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <!-- Sección Backup -->
+                <div id="section-backup" class="config-section hidden">
+                    <div class="card p-6 mb-6 fade-in">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-6">
+                            <i class="fas fa-database mr-3 text-purple-600"></i>
+                            Copias de Seguridad
+                        </h3>
+
+                        <!-- Crear Backup -->
+                        <div class="mb-8">
+                            <h4 class="text-lg font-medium text-gray-700 mb-4">Crear Copia de Seguridad</h4>
+                            <div class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                Se recomienda crear copias de seguridad regularmente para proteger tus datos.
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                <button id="create-backup" class="btn-success">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Crear Backup Ahora
+                                </button>
+                                <div class="form-group mb-0">
+                                    <label class="switch">
+                                        <input type="checkbox" id="auto-backup">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="ml-3 text-sm text-gray-600">Backup automático diario</span>
+                                </div>
+                            </div>
+
+                            <div id="backup-progress" class="hidden mt-4">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-2" id="backup-status">Creando copia de seguridad...</p>
+                            </div>
+                        </div>
+
+                        <!-- Historial de Backups -->
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-700 mb-4">Historial de Copias de Seguridad</h4>
+                            <div id="backup-history" class="space-y-3">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                                    <p>Cargando backups...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirm-modal" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center">
+            <h2 id="confirm-title" class="text-xl font-bold text-purple-600 mb-4">Confirmación</h2>
+            <p id="confirm-message" class="text-gray-700 mb-6">¿Desea continuar?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="accept-confirm" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all">Aceptar</button>
+                <button id="cancel-confirm" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../auth-check.js"></script>
+    <script src="configuracion.js"></script>
+</body>
+</html>

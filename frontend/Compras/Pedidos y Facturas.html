@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compras y Pedidos | Pollo Na'Guara</title>
+    <link rel="stylesheet" href="compras.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .detalle-table input[type="number"] { width: 100px; text-align: right; }
+        .subtotal-cell { font-weight: bold; text-align: right; }
+        /* Estilos Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+        .modal.active { display: flex; opacity: 1; }
+        .modal-content { background: white; width: 90%; max-width: 800px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(-20px); transition: transform 0.3s ease; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; }
+        .modal.active .modal-content { transform: translateY(0); }
+        .modal-header { padding: 15px 20px; background: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { margin: 0; color: white !important; font-size: 1.2rem; }
+        .close-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-footer { padding: 15px 20px; background: #f8f9fa; border-top: 1px solid #eee; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="compras-container">
+        <div class="breadcrumb"><a href="../index.html">Dashboard</a> / <span>Compras</span></div>
+        
+        <section class="header-section">
+            <h1><i class="fa-solid fa-cart-shopping"></i> Compras y Pedidos</h1>
+            <p>Gestiona pedidos a proveedores, facturas de compra y controla el proceso completo de adquisiciones.</p>
+        </section>
+
+        <section class="cards">
+            <div class="card morado">
+                <div class="card-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <div class="card-content"><h3 id="stats-total-mes">Bs. 0.00</h3><p>Comprado este Mes</p></div>
+            </div>
+            <div class="card verde">
+                <div class="card-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                <div class="card-content"><h3 id="stats-pendientes">0</h3><p>Pedidos por Recibir</p></div>
+            </div>
+            <div class="card azul">
+                <div class="card-icon"><i class="fa-solid fa-truck"></i></div>
+                <div class="card-content"><h3 id="stats-recibidos">0</h3><p>Pedidos Recibidos</p></div>
+            </div>
+        </section>
+
+        <section class="tabs-section">
+            <input type="radio" name="tab" id="tab-pedidos" checked onchange="comprasManager.cambiarTab('pedidos')">
+            <input type="radio" name="tab" id="tab-nuevo-pedido" onchange="comprasManager.cambiarTab('nuevo')">
+            
+            <div class="tabs-header">
+                <label for="tab-pedidos" class="tab-btn"><i class="fa-solid fa-list-check"></i> Historial de Pedidos</label>
+                <label for="tab-nuevo-pedido" class="tab-btn"><i class="fa-solid fa-plus"></i> Nuevo Pedido</label>
+            </div>
+
+            <div class="tabs-content">
+                <div class="tab-pane" id="content-pedidos" style="display: block;">
+                    <div class="table-actions">
+                        <div class="search-box"><i class="fa-solid fa-search"></i><input type="text" id="search-pedidos" placeholder="Buscar..."></div>
+                        <div class="filter-options">
+                            <select id="filtro-estado" class="form-control">
+                                <option value="">Todos los estados</option>
+                                <option value="pendiente">Pendientes</option>
+                                <option value="recibida">Recibidos</option>
+                            </select>
+                            <button class="btn btn-sm btn-info" onclick="comprasManager.cargarCompras()"><i class="fa-solid fa-sync"></i></button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr><th>ID / Factura</th><th>Proveedor</th><th>Fecha</th><th>Estado</th><th>Total (Bs.)</th><th>Acciones</th></tr>
+                            </thead>
+                            <tbody id="tabla-pedidos-body"><tr><td colspan="6" class="text-center">Cargando...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="content-nuevo-pedido" style="display: none;">
+                    <div class="pedido-form-container">
+                        <form id="form-nuevo-pedido">
+                            <div class="form-header"><h3><i class="fa-solid fa-cart-plus"></i> Registrar Compra / Pedido</h3></div>
+                            <div class="form-grid">
+                                <div class="form-group"><label>Proveedor *</label><select id="new-proveedor" class="form-control" required><option value="">Cargando...</option></select></div>
+                                <div class="form-group"><label>N° Factura / Referencia</label><input type="text" id="new-factura" class="form-control" placeholder="Ej: FAC-00123"></div>
+                                <div class="form-group"><label>Fecha Compra</label><input type="date" id="new-fecha" class="form-control" required></div>
+                                <div class="form-group"><label>Observaciones</label><textarea id="new-obs" class="form-control" rows="1" placeholder="Notas..."></textarea></div>
+                            </div>
+                            <div class="detalle-pedido">
+                                <div class="detalle-header"><h4>Productos</h4><button type="button" class="btn btn-sm btn-primary" onclick="comprasManager.agregarFilaProducto()"><i class="fa-solid fa-plus"></i> Agregar Producto</button></div>
+                                <div class="table-container">
+                                    <table class="detalle-table">
+                                        <thead><tr><th style="width: 40%;">Producto</th><th style="width: 15%;">Cant.</th><th style="width: 20%;">Costo Unit. (Bs.)</th><th style="width: 20%;">Subtotal</th><th style="width: 5%;"></th></tr></thead>
+                                        <tbody id="new-items-body"></tbody>
+                                        <tfoot><tr><td colspan="3" class="text-right"><strong>Total Estimado:</strong></td><td colspan="2"><span id="new-total" class="total-pedido">Bs. 0.00</span></td></tr></tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="form-actions" style="margin-top: 20px;">
+                                <button type="button" class="btn btn-secondary" onclick="document.getElementById('tab-pedidos').click()">Cancelar</button>
+                                <button type="submit" class="btn btn-success"><i class="fa-solid fa-save"></i> Guardar Pedido</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="modal" id="modal-recibir">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--success);"><h3><i class="fa-solid fa-box-open"></i> Recibir Mercancía</h3><button class="close-btn" onclick="comprasManager.cerrarModal('modal-recibir')">&times;</button></div>
+                <div class="modal-body">
+                    <p>Confirma cantidades recibidas (esto actualizará stock y costo).</p>
+                    <input type="hidden" id="recibir-compra-id">
+                    <div class="table-container">
+                        <table style="font-size: 0.9rem;"><thead><tr><th>Producto</th><th>Solicitado</th><th>Recibido Real *</th></tr></thead><tbody id="recibir-body"></tbody></table>
+                    </div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" onclick="comprasManager.cerrarModal('modal-recibir')">Cancelar</button><button class="btn btn-success" onclick="comprasManager.confirmarRecepcion()"><i class="fa-solid fa-check-circle"></i> Confirmar Ingreso</button></div>
+            </div>
+        </div>
+
+        <div class="modal" id="modal-detalles">
+            <div class="modal-content">
+                <div class="modal-header"><h3>Detalles del Pedido</h3><button class="close-btn" onclick="comprasManager.cerrarModal('modal-detalles')">&times;</button></div>
+                <div class="modal-body" id="ver-detalles-body"></div>
+            </div>
+        </div>
+    </div>
+    <script src="../auth-check.js"></script>
+    <script src="compras.js"></script>
+</body>
+</html>

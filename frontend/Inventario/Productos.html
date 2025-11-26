@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos | Pollo Na'Guara</title>
+    <link rel="stylesheet" href="inventario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-left: 4px solid;
+        }
+        
+        .toast-success {
+            background: #28a745;
+            border-left-color: #1e7e34;
+        }
+        
+        .toast-error {
+            background: #dc3545;
+            border-left-color: #c82333;
+        }
+        
+        .toast-info {
+            background: #17a2b8;
+            border-left-color: #138496;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .stock-bar {
+            width: 60px;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        
+        .stock-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .stock-fill.high { background: #28a745; width: 100%; }
+        .stock-fill.medium { background: #ffc107; width: 65%; }
+        .stock-fill.low { background: #fd7e14; width: 30%; }
+        .stock-fill.empty { background: #dc3545; width: 5%; }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        
+        .category-tag {
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .product-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .product-image {
+            width: 32px;
+            height: 32px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .pagination .btn {
+            min-width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #495057;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .btn:hover:not(.disabled) {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .pagination .btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .pagination .btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            margin-left: auto;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .pagination-ellipsis {
+            padding: 8px 12px;
+            color: #6c757d;
+        }
+
+        .items-per-page {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .items-per-page select {
+            width: auto;
+            padding: 4px 8px;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .pagination {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .pagination-info {
+                margin-left: 0;
+                order: -1;
+            }
+            
+            .table-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="inventario-container">
+        <!-- Header Section -->
+        <div class="breadcrumb">
+            <a href="../index.html">Dashboard</a> / 
+            <span>Inventario</span>
+        </div>
+        <section class="header-section">
+            <h1><i class="fa-solid fa-drumstick-bite"></i> Gestión de Productos</h1>
+            <p>Administra los productos del inventario: pollos, milanesas, aliños y otros derivados.</p>
+        </section>
+
+        <!-- Cards de Resumen -->
+        <section class="cards">
+    <div class="card">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <div class="card-content">
+            <h3 id="card-total-productos">0</h3>
+            <p>Total Productos</p>
+        </div>
+    </div>
+    <div class="card">
+        <i class="fa-solid fa-check-circle"></i>
+        <div class="card-content">
+            <h3 id="card-stock-total">0</h3>
+            <p>Unidades en Stock</p>
+        </div>
+    </div>
+    <div class="card">
+        <i class="fa-solid fa-exclamation-triangle"></i>
+        <div class="card-content">
+            <h3 id="card-bajo-stock">0</h3>
+            <p>Bajo Stock / Agotados</p>
+        </div>
+    </div>
+    <div class="card">
+        <i class="fa-solid fa-money-bill-wave"></i>
+        <div class="card-content">
+            <h3 id="card-valor-inventario">Bs. 0.00</h3>
+            <p>Valor del Inventario</p>
+        </div>
+    </div>
+</section>
+
+        <!-- Controles Rápidos -->
+        <section class="quick-controls">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <h3><i class="fa-solid fa-filter"></i> Filtros Avanzados</h3>
+                    <div class="filter-options">
+                        <select id="filtro-categoria" class="form-control">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                        <select id="filtro-stock" class="form-control">
+                            <option value="">Todo el stock</option>
+                            <option value="disponible">Stock Disponible</option>
+                            <option value="bajo">Stock Bajo</option>
+                            <option value="agotado">Sin Stock</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <h3><i class="fa-solid fa-bolt"></i> Acciones Rápidas</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-nuevo-producto">
+                            <i class="fa-solid fa-plus"></i> Nuevo Producto
+                        </button>
+                        <button class="btn btn-info btn-actualizar">
+                            <i class="fa-solid fa-sync"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tabla de Productos -->
+        <section class="table-section">
+            <div class="table-header">
+                <h2><i class="fa-solid fa-list"></i> Lista de Productos</h2>
+                <div class="table-actions">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" placeholder="Buscar producto..." id="search-input">
+                    </div>
+                    <div class="items-per-page">
+                        <label>Mostrar:</label>
+                        <select id="items-per-page" class="form-control-sm">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Precio (Bs)</th>
+                            <th>Stock</th>
+                            <th>Stock Mín.</th>
+                            <th>Unidad</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 20px;">
+                                <div class="loading-spinner">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                    Cargando productos...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <div class="pagination">
+                <!-- La paginación se generará dinámicamente aquí -->
+            </div>
+        </section>
+
+        <!-- Formulario para Nuevo Producto -->
+        <section class="form-section">
+            <h2><i class="fa-solid fa-plus-circle"></i> Registrar Nuevo Producto</h2>
+            <form class="product-form" id="product-form">
+                <input type="hidden" id="product-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="product-name">Nombre del Producto *</label>
+                        <input type="text" id="product-name" class="form-control" required placeholder="Ej: Pollo Entero Fresco">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-category">Categoría *</label>
+                        <select id="product-category" class="form-control" required>
+                            <option value="">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="product-provider">Proveedor</label>
+                       <select id="product-provider" class="form-control">
+                      <option value="">Seleccionar proveedor</option>
+                    </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-price">Precio (Bs) *</label>
+                        <input type="number" id="product-price" class="form-control" required step="0.01" placeholder="0.00" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-cost">Costo de Compra (Bs)</label>
+                        <input type="number" id="product-cost" class="form-control" step="0.01" placeholder="0.00" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-stock">Stock Inicial</label>
+                        <input type="number" id="product-stock" class="form-control" placeholder="0" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-min-stock">Stock Mínimo</label>
+                        <input type="number" id="product-min-stock" class="form-control" placeholder="0" min="0" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-unit">Unidad de Medida *</label>
+                        <select id="product-unit" class="form-control" required>
+                            <option value="">Seleccionar unidad</option>
+                            <option value="unidad">Unidad</option>
+                            <option value="kg">Kilogramo (Kg)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="product-tasa-iva">Tasa de IVA *</label>
+                        <select id="product-tasa-iva" class="form-control" required>
+                            <option value="">Seleccionar tasa IVA</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="container-reason" style="display: none; grid-column: 1 / -1;">
+    <label for="product-reason" style="display: block; font-weight: 500; color: #5a00b3; margin-bottom: 5px;">
+        <i class="fas fa-comment-alt"></i> Motivo del cambio de stock *
+    </label>
+    <input type="text" id="product-reason" class="input-field" 
+           placeholder="Ej: Llegada de mercancía, Corrección de inventario, Merma..." 
+           style="width: 100%; border-color: #5a00b3; background-color: #f5f3ff;">
+</div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary btn-cancelar">
+                        <i class="fa-solid fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Guardar Producto
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="modal" id="modal-detalles">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-circle-info"></i> Detalles del Producto</h3>
+            <button class="close-btn" onclick="productosManager.cerrarModal('modal-detalles')">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-detalles-body">
+            </div>
+        <div class="modal-footer" style="padding: 15px 20px; text-align: right; background: #f8f9fa; border-top: 1px solid #eee;">
+            <button class="btn btn-secondary" onclick="productosManager.cerrarModal('modal-detalles')">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modal-stock">
+    <div class="modal-content">
+        <div class="modal-header" style="background: var(--warning);">
+            <h3><i class="fa-solid fa-boxes-stacked"></i> Ajuste Manual de Stock</h3>
+            <button class="close-btn" onclick="productosManager.cerrarModal('modal-stock')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="form-ajuste-stock">
+                <input type="hidden" id="stock-product-id">
+                
+                <div class="form-group">
+                    <label>Producto</label>
+                    <input type="text" id="stock-product-name" class="form-control" disabled style="background: #f1f1f1;">
+                </div>
+
+                <div class="form-grid" style="margin-top: 15px; grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>Stock Actual</label>
+                        <input type="number" id="stock-actual-display" class="form-control" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label>Nuevo Stock Total *</label>
+                        <input type="number" id="stock-nuevo-input" class="form-control" required step="0.01" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>Motivo del Ajuste *</label>
+                    <textarea id="stock-motivo-input" class="form-control" rows="2" required placeholder="Ej: Conteo físico, merma, corrección..."></textarea>
+                </div>
+
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="productosManager.cerrarModal('modal-stock')">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa-solid fa-save"></i> Guardar Ajuste
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <script src="productos.js"></script>
+</body>
+</html>

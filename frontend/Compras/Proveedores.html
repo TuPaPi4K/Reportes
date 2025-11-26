@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores | Pollo Na'Guara</title>
+    <link rel="stylesheet" href="compras.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* Estilos para Toast (Notificaciones) */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-left: 4px solid;
+        }
+        .toast-success { background: #28a745; border-left-color: #1e7e34; }
+        .toast-error { background: #dc3545; border-left-color: #c82333; }
+        .toast-info { background: #17a2b8; border-left-color: #138496; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="compras-container">
+        <div class="breadcrumb">
+            <a href="../index.html">Dashboard</a> / 
+            <span>Proveedores</span>
+        </div>
+
+        <section class="header-section">
+            <h1><i class="fa-solid fa-truck-field"></i> Gestión de Proveedores</h1>
+            <p>Directorio de aliados comerciales y gestión de suministros.</p>
+        </section>
+
+        <section class="cards">
+            <div class="card morado">
+                <div class="card-icon">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div class="card-content">
+                    <h3 id="card-total">0</h3>
+                    <p>Total Proveedores</p>
+                </div>
+            </div>
+
+            <div class="card verde">
+                <div class="card-icon">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div class="card-content">
+                    <h3 id="card-con-productos">0</h3>
+                    <p>Proveedores Activos</p>
+                </div>
+            </div>
+
+            <div class="card azul">
+                <div class="card-icon">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+                <div class="card-content">
+                    <h3 id="card-total-productos">0</h3>
+                    <p>Productos Suministrados</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="tabs-section" style="padding: 20px;">
+            <div class="tab-header">
+                <h3><i class="fa-solid fa-list"></i> Directorio de Proveedores</h3>
+                <div class="tab-actions">
+                    <button class="btn btn-primary btn-nuevo">
+                        <i class="fa-solid fa-plus"></i> Nuevo Proveedor
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-actions">
+                <div class="search-box">
+                    <i class="fa-solid fa-search"></i>
+                    <input type="text" placeholder="Buscar por nombre o contacto..." id="search-input">
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Empresa / Nombre</th>
+                            <th>Contacto</th>
+                            <th>Dirección</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="proveedores-body">
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px;">
+                                <div class="loading-spinner">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Cargando datos...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="padding: 15px; text-align: right; color: #6c757d; font-size: 0.9rem;">
+                <span id="registros-info">Mostrando 0 registros</span>
+            </div>
+        </section>
+
+        <section class="pedido-form-container" id="form-section" style="margin-top: 30px;">
+            <div class="form-header">
+                <h3><i class="fa-solid fa-plus-circle"></i> Registrar / Editar Proveedor</h3>
+            </div>
+            
+            <form id="proveedor-form">
+                <input type="hidden" id="proveedor-id">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombre">Nombre de la Empresa / Proveedor *</label>
+                        <input type="text" id="nombre" class="form-control" required placeholder="Ej: Avícola La Esperanza">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contacto">Teléfono / Contacto</label>
+                        <input type="text" id="contacto" class="form-control" placeholder="Ej: 0412-1234567">
+                    </div>
+
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="direccion">Dirección Fiscal / Ubicación</label>
+                        <input type="text" id="direccion" class="form-control" placeholder="Ej: Zona Industrial II, Galpón 4">
+                    </div>
+                </div>
+
+                <div class="form-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-danger btn-cancelar" id="btn-cancelar" style="display: none;">
+                        <i class="fa-solid fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-save"></i> Guardar Proveedor
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <div class="modal" id="modal-productos">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-box-open"></i> Productos Suministrados</h3>
+            <button class="close-btn" onclick="proveedoresManager.cerrarModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="provider-summary" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                <h4 id="modal-provider-name" style="color: var(--primary); margin:0;">Nombre del Proveedor</h4>
+                <small style="color: var(--gray);">Listado de artículos asociados en inventario</small>
+            </div>
+            
+            <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+                <table class="modal-table">
+                    <thead style="position: sticky; top: 0; background: #f8f9fa;">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th>Stock Actual</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-products-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer" style="padding: 15px 20px; text-align: right; border-top: 1px solid #eee;">
+            <button class="btn btn-secondary" onclick="proveedoresManager.cerrarModal()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal {
+        display: none; /* Oculto por defecto */
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .modal.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 600px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+
+    .modal.active .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
+        padding: 15px 20px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: white !important; }
+    
+    .close-btn {
+        background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;
+    }
+
+    .modal-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .modal-table th { padding: 10px; text-align: left; color: #666; font-weight: 600; }
+    .modal-table td { padding: 10px; border-bottom: 1px solid #eee; }
+</style>
+
+    <script src="../auth-check.js"></script>
+    <script src="proveedores.js"></script>
+</body>
+</html>

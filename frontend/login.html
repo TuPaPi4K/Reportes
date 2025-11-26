@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Metadatos básicos -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Pollera Na'Guara</title>
+
+  <!-- Tailwind CSS y tipografía Inter para el estilo visual moderno -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Variables y estilos base -->
+  <style>
+    :root { --morada: #7b00f1 }
+    html, body { height: 100% }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+  <!-- Sección izquierda tipo hero con color institucional -->
+  <header>
+    <div class="w-full bg-[var(--morada)]" style="height:50vh;">
+      <div class="max-w-6xl mx-auto h-full flex items-center px-6 lg:px-8">
+        <div class="text-white lg:w-1/2">
+          <p class="font-semibold tracking-wide">Pollera Na'Guara</p>
+          <h1 class="text-4xl md:text-5xl font-bold mt-4">Iniciar sesión</h1>
+          <p class="mt-4 text-lg text-white/90 max-w-xl">
+            Inicia sesión en tu cuenta y disfruta de una experiencia sin complicaciones.
+            Gestiona ventas, compras, inventario y clientes desde un solo lugar.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sección derecha con tarjeta de login flotante -->
+  <main class="-mt-24">
+    <div class="max-w-6xl mx-auto px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 items-start">
+        <!-- Columna vacía para alinear la tarjeta con el hero -->
+        <div class="hidden lg:block lg:col-span-7"></div>
+
+        <!-- Tarjeta de login -->
+        <section class="lg:col-span-5 mx-auto max-w-md" style="margin-top:-6.5rem;">
+          <article class="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+            <div class="p-8 md:p-10">
+              <h2 class="text-2xl font-bold text-gray-900 mb-4">Iniciar sesión</h2>
+
+              <!-- Formulario: misma estructura e IDs que el código original -->
+              <form id="loginForm" class="space-y-5" novalidate>
+                <!-- Campo Usuario -->
+                <div>
+                  <label for="usuario" class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                  <input
+                    type="text"
+                    id="usuario"
+                    required
+                    placeholder="Ingrese su usuario"
+                    autocomplete="username"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--morada)]"
+                  />
+                </div>
+
+                <!-- Campo Contraseña con botón mostrar/ocultar -->
+                <div>
+                  <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                  <div class="relative">
+                    <input
+                      type="password"
+                      id="password"
+                      required
+                      placeholder="Ingrese su contraseña"
+                      autocomplete="current-password"
+                      class="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--morada)]"
+                    />
+                    <!-- Botón de alternancia de visibilidad -->
+                    <button
+                      type="button"
+                      id="togglePassword"
+                      aria-label="Mostrar contraseña"
+                      aria-pressed="false"
+                      class="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    >
+                      <!-- Ícono ojo (visible por defecto) -->
+                      <svg id="eyeIcon" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 10.224 7.29 6 12 6c4.71 0 8.577 4.224 9.964 5.683a1.012 1.012 0 010 .639c-1.387 1.459-5.254 5.683-9.964 5.683-4.71 0-8.577-4.224-9.964-5.683z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <!-- Ícono ojo tachado (oculto por defecto) -->
+                      <svg id="eyeOffIcon" class="w-5 h-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 14.303 6.246 18 12 18c.99 0 1.953-.138 2.863-.395" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M1.5 1.5l21 21" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Botón principal -->
+                <button
+                  type="submit"
+                  class="w-full py-3 bg-[var(--morada)] text-white font-semibold rounded-lg shadow-md hover:bg-[#6900d1] transition-all"
+                >
+                  Ingresar al Sistema
+                </button>
+              </form>
+
+              <!-- Contenedor de mensajes -->
+              <div id="mensaje" class="mt-4 text-center text-sm"></div>
+            </div>
+          </article>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Script: lógica original del login + mejoras de accesibilidad y ojo de contraseña -->
+  <script>
+    // URL de la API (igual que el original)
+    const API_URL = 'http://localhost:3000/login';
+
+    // Manejador de envío del formulario
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Referencias a elementos
+      const boton = e.target.querySelector('button[type="submit"]');
+      const mensaje = document.getElementById('mensaje');
+      const nombre_usuario = document.getElementById('usuario').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Validación básica (igual que el original)
+      if (!nombre_usuario || !password) {
+        mostrarMensaje('Por favor, complete todos los campos', 'error');
+        return;
+      }
+
+      try {
+        // Estado de carga
+        boton.disabled = true;
+        boton.textContent = 'Iniciando sesión...';
+        mensaje.textContent = '';
+
+        // Petición al servidor
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ nombre_usuario, password })
+        });
+
+        const data = await res.json();
+
+        // Manejo de respuesta (igual que el original)
+        if (res.ok) {
+          localStorage.setItem('usuario', JSON.stringify(data.usuario));
+          mostrarMensaje('¡Login exitoso! Redirigiendo...', 'success');
+
+          // Redirigir tras breve delay
+          setTimeout(() => {
+            redirectAfterLogin();
+          }, 1000);
+        } else {
+          mostrarMensaje(data.error || 'Error en el login', 'error');
+          boton.disabled = false;
+          boton.textContent = 'Ingresar al Sistema';
+        }
+      } catch (err) {
+        mostrarMensaje('Error de conexión con el servidor', 'error');
+        boton.disabled = false;
+        boton.textContent = 'Ingresar al Sistema';
+      }
+    });
+
+    // Función de mensajes: usa colores Tailwind en lugar de clases antiguas
+    function mostrarMensaje(texto, tipo) {
+      const mensaje = document.getElementById('mensaje');
+      mensaje.textContent = texto;
+      mensaje.className = 'mt-4 text-center text-sm ' + (tipo === 'error' ? 'text-red-600' : 'text-green-600');
+    }
+
+    // Redirección post login (igual)
+    function redirectAfterLogin() {
+      const redirectUrl = sessionStorage.getItem('redirectAfterLogin');
+      if (redirectUrl && redirectUrl !== '/login.html') {
+        sessionStorage.removeItem('redirectAfterLogin');
+        window.location.href = window.location.origin + redirectUrl;
+      } else {
+        window.location.href = window.location.origin + '/index.html';
+      }
+    }
+
+    // Verificación de sesión al cargar (igual que el original)
+    window.addEventListener('DOMContentLoaded', async () => {
+      const usuarioStorage = localStorage.getItem('usuario');
+
+      if (usuarioStorage) {
+        try {
+          const response = await fetch('http://localhost:3000/api/sesion', {
+            credentials: 'include'
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.autenticado) {
+              redirectAfterLogin();
+              return;
+            }
+          }
+        } catch (error) {
+          console.log('Error verificando sesión, continuando con login...');
+        }
+      }
+
+      // Limpieza de estado inconsistente (igual)
+      localStorage.removeItem('usuario');
+    });
+
+    // Mostrar/ocultar contraseña con accesibilidad ARIA
+    (function initTogglePassword() {
+      const toggle = document.getElementById('togglePassword');
+      const pwd = document.getElementById('password');
+      const eye = document.getElementById('eyeIcon');
+      const eyeOff = document.getElementById('eyeOffIcon');
+
+      if (!toggle || !pwd || !eye || !eyeOff) return;
+
+      toggle.addEventListener('click', () => {
+        const isHidden = pwd.type === 'password';
+        // Alterna tipo de input
+        pwd.type = isHidden ? 'text' : 'password';
+        // Actualiza atributos ARIA
+        toggle.setAttribute('aria-pressed', String(isHidden));
+        toggle.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+        // Alterna visibilidad de íconos
+        eye.classList.toggle('hidden', !isHidden);
+        eyeOff.classList.toggle('hidden', isHidden);
+      });
+    })();
+  </script>
+</body>
+</html>

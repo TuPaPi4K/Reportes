@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Pollera Na'Guara</title>
+  <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <button id="sidebarToggle" class="menu-toggle" aria-label="Alternar menú">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+    <nav class="sidebar-menu" aria-label="Menú principal">
+      <ul>
+        <li><a href="#" class="menu-item active" onclick="loadDashboard(); setActive(this);"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+        <li>
+          <button class="menu-item submenu-toggle" onclick="toggleSubmenu('ventas-submenu', this);">
+            <i class="fas fa-shopping-cart"></i> <span>Ventas</span> <i class="fas fa-chevron-down submenu-arrow"></i>
+          </button>
+          <ul id="ventas-submenu" class="submenu">
+            <li><a href="Ventas/Ventas.html" class="submenu-item">Registro de Ventas</a></li>
+            <li><a href="Ventas/Facturas_ventas.html" class="submenu-item">Facturas de Venta</a></li>
+          </ul>
+        </li>
+        <li>
+          <button class="menu-item submenu-toggle" onclick="toggleSubmenu('inventario-submenu', this);">
+            <i class="fas fa-warehouse"></i> <span>Inventario</span> <i class="fas fa-chevron-down submenu-arrow"></i>
+          </button>
+          <ul id="inventario-submenu" class="submenu">
+            <li><a href="Inventario/transformaciones.html" class="submenu-item">Transformación Producto</a></li>
+            <li><a href="Inventario/Productos.html" class="submenu-item">Productos</a></li>
+            <li><a href="Inventario/Categorias.html" class="submenu-item">Categorías</a></li>
+          </ul>
+        </li>
+        <li>
+          <button class="menu-item submenu-toggle" onclick="toggleSubmenu('compras-submenu', this);">
+            <i class="fas fa-shopping-bag"></i> <span>Compras</span> <i class="fas fa-chevron-down submenu-arrow"></i>
+          </button>
+          <ul id="compras-submenu" class="submenu">
+            <li><a href="Compras/Proveedores.html" class="submenu-item">Proveedores</a></li>
+            <li><a href="Compras/Pedidos y Facturas.html" class="submenu-item">Pedidos / Facturas</a></li>
+          </ul>
+        </li>
+        <li><a href="Reportes/Reportes.html" class="menu-item"><i class="fas fa-chart-line"></i> <span>Reportes</span></a></li>
+        <li><a href="Configuracion/Configuracion.html" class="menu-item"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
+        <li>
+          <a href="Clientes/clientes.html" class="menu-item">
+            <i class="fas fa-users"></i> <span>Clientes</span>
+          </a>
+        </li>   
+        <li><a href="GestionUsuarios/GestionU.html" class="menu-item"><i class="fas fa-user-shield"></i> <span>Usuarios</span></a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Top bar -->
+  <header class="top-bar">
+    <span class="page-title">Dashboard</span>
+    <div class="user-profile" tabindex="0" onclick="toggleUserMenu()" onblur="closeUserMenu()">
+      <span class="user-avatar" id="userAvatar">U</span>
+      <span class="user-info">
+        <span class="user-name" id="userName">Cargando...</span>
+        <span class="user-role" id="userRole">Usuario</span>
+      </span>
+      <div class="user-dropdown" id="userDropdown">
+        <a href="#" class="dropdown-item" onclick="goUsers()"><i class="fas fa-user"></i> Ver usuario</a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="logoutBtn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <main id="contenidoPrincipal" class="main-content">
+    <p>Cargando Dashboard...</p>
+  </main>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+    let usuarioActual = null;
+
+    async function fetchData(endpoint) {
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, { credentials: 'include' });
+        if (!res.ok) throw new Error(`Error ${res.status}`);
+        return res.json();
+      } catch (err) {
+        console.error(`❌ Error en fetchData(${endpoint}):`, err);
+        throw err;
+      }
+    }
+
+    function actualizarInfoUsuario(usuario) {
+      if (usuario) {
+        const iniciales = obtenerIniciales(usuario.nombre);
+        document.getElementById('userAvatar').textContent = iniciales;
+        document.getElementById('userName').textContent = usuario.nombre;
+        document.getElementById('userRole').textContent = usuario.rol;
+        usuarioActual = usuario;
+        
+        // Aplicar restricciones de menú según el rol
+        aplicarRestriccionesPorRol(usuario);
+      }
+    }
+
+    function aplicarRestriccionesPorRol(usuario) {
+      const rol = usuario.rol;
+      
+      // Obtener todos los elementos del menú
+      const elementosMenu = {
+        'dashboard': document.querySelector('a[onclick*="loadDashboard"]').closest('li'),
+        'ventas': document.querySelector('button[onclick*="ventas-submenu"]').closest('li'),
+        'inventario': document.querySelector('button[onclick*="inventario-submenu"]').closest('li'),
+        'compras': document.querySelector('button[onclick*="compras-submenu"]').closest('li'),
+        'reportes': document.querySelector('a[href*="Reportes.html"]').closest('li'),
+        'configuracion': document.querySelector('a[href*="Configuracion.html"]').closest('li'),
+        'clientes': document.querySelector('a[href*="clientes.html"]').closest('li'),
+        'usuarios': document.querySelector('a[href*="GestionU.html"]').closest('li')
+      };
+
+      // Ocultar todo primero
+      Object.values(elementosMenu).forEach(element => {
+        if (element) element.style.display = 'none';
+      });
+
+      // Mostrar según rol
+      if (rol === 'Vendedor') {
+        // Vendedor: solo Ventas e Inventario
+        if (elementosMenu.ventas) elementosMenu.ventas.style.display = '';
+        if (elementosMenu.inventario) elementosMenu.inventario.style.display = '';
+      } 
+      else if (rol === 'Administrador') {
+        // Admin: todo menos Compras y Configuración
+        if (elementosMenu.dashboard) elementosMenu.dashboard.style.display = '';
+        if (elementosMenu.ventas) elementosMenu.ventas.style.display = '';
+        if (elementosMenu.inventario) elementosMenu.inventario.style.display = '';
+        if (elementosMenu.reportes) elementosMenu.reportes.style.display = '';
+        if (elementosMenu.clientes) elementosMenu.clientes.style.display = '';
+        if (elementosMenu.usuarios) elementosMenu.usuarios.style.display = '';
+      } 
+      else if (rol === 'Super Admin') {
+        // Super Admin: acceso completo
+        Object.values(elementosMenu).forEach(element => {
+          if (element) element.style.display = '';
+        });
+      }
+      
+      console.log(`✅ Restricciones aplicadas para rol: ${rol}`);
+    }
+
+    function obtenerIniciales(nombre) {
+      return nombre.split(' ').map(p => p.charAt(0)).join('').toUpperCase().substring(0, 2);
+    }
+
+    async function loadDashboard() {
+      const main = document.getElementById('contenidoPrincipal');
+      main.innerHTML = `<p style="text-align:center;">Cargando datos...</p>`;
+      try {
+        const stats = await fetchData('/dashboard/stats');
+        main.innerHTML = `
+          <section class="dashboard-cards-custom">
+            <div class="card_wrap">
+              <div class="card_header uno"><p>${stats.totalProductos}</p></div>
+              <div class="card_content">
+                <h1 class="card_title"><b>Productos</b></h1>
+                <p class="card_text">Total registrados.</p>
+                <a href="Inventario/Productos.html" class="card_btn uno">Ver</a>
+              </div>
+            </div>
+            <div class="card_wrap">
+              <div class="card_header dos"><p>${stats.ventasHoy}</p></div>
+              <div class="card_content">
+                <h1 class="card_title"><b>Ventas Hoy</b></h1>
+                <p class="card_text">Realizadas hoy.</p>
+                <a href="Ventas/Facturas_ventas.html?fecha=${new Date().toISOString().split('T')[0]}" class="card_btn dos">Ver</a>
+              </div>
+            </div>
+            <div class="card_wrap">
+              <div class="card_header tres"><p>${stats.totalProveedores}</p></div>
+              <div class="card_content">
+                <h1 class="card_title"><b>Proveedores</b></h1>
+                <p class="card_text">Activos registrados.</p>
+                <a href="Compras/Proveedores.html" class="card_btn tres">Ver</a>
+              </div>
+            </div>
+            <div class="card_wrap">
+              <div class="card_header cuatro"><p>${stats.productosStockMinimo}</p></div>
+              <div class="card_content">
+                <h1 class="card_title"><b>Stock mínimo</b></h1>
+                <p class="card_text">Productos con bajo inventario.</p>
+                <a href="Inventario/Productos.html" class="card_btn cuatro">Ver</a>
+              </div>
+            </div>
+          </section>
+          <h2>Productos más vendidos</h2>
+          <canvas id="graficoTorta" width="400" height="200"></canvas>
+        `;
+        const ctx = document.getElementById('graficoTorta').getContext('2d');
+        new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Producto A', 'Producto B', 'Producto C'],
+            datasets: [{ data: [12, 19, 7], backgroundColor: ['#5a00b3', '#3498db', '#2ecc71'] }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' }
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Error cargando dashboard:', err);
+        main.innerHTML = `
+          <div style="text-align: center; padding: 2rem;">
+            <p style="color: #e74c3c; margin-bottom: 1rem;">No se pudieron cargar los datos del dashboard.</p>
+            <button onclick="loadDashboard()" class="card_btn uno">Reintentar</button>
+          </div>
+        `;
+      }
+    }
+
+    function toggleSubmenu(id, btn) {
+      const submenu = document.getElementById(id);
+      submenu.classList.toggle('open');
+      btn.classList.toggle('open');
+    }
+
+    function setActive(el) {
+      document.querySelectorAll('.menu-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleUserMenu() {
+      document.getElementById('userDropdown').classList.toggle('active');
+    }
+
+    function closeUserMenu() {
+      setTimeout(() => {
+        document.getElementById('userDropdown').classList.remove('active');
+      }, 150);
+    }
+
+    function goUsers() {
+      window.location.href = 'GestionUsuarios/GestionU.html';
+    }
+
+    async function logout() {
+      await authChecker.logout();
+    }
+
+    // ✅ Carga automática al iniciar
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+          const usuario = await authChecker.getCurrentUser();
+          
+          if (!usuario) {
+              window.location.href = '/login.html';
+              return;
+          }
+          
+          actualizarInfoUsuario(usuario);
+          loadDashboard();
+          
+      } catch (err) {
+          console.error('❌ Error cargando usuario:', err);
+          window.location.href = '/login.html';
+      }
+    });
+  </script>
+
+  <!-- Script de autenticación -->
+  <script src="auth-check.js"></script>
+</body>
+</html>

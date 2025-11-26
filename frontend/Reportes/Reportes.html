@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Sistema Na'Guara</title>
+    <link rel="stylesheet" href="reportes.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+
+</head>
+<body class="min-h-full">
+    <main class="container mx-auto p-6 max-w-7xl">
+        <!-- Header -->
+        <header class="card p-6 mb-6 fade-in">
+            <div class="breadcrumb">
+                <a href="../index.html">Dashboard</a> /
+                <span>Reportes</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                        <i class="fas fa-chart-bar mr-3 text-purple-600"></i>
+                        Reportes del Sistema
+                    </h1>
+                    <p class="text-gray-600">Genera y visualiza reportes de tu negocio</p>
+                </div>
+                <div class="text-right">
+                    <div class="role-badge role-super-admin mb-2" id="user-role">Super Administrador</div>
+                    <p class="text-sm text-gray-500" id="user-permissions">Acceso completo a reportes</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Panel de Filtros -->
+            <aside class="lg:col-span-1">
+                <div class="card p-6 fade-in">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filtros
+                    </h3>
+
+                    <!-- Filtro por Fechas -->
+                    <div class="filter-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Rango de Fechas
+                        </label>
+                        <div class="space-y-3">
+                            <input type="date" id="date-from" class="input-field">
+                            <input type="date" id="date-to" class="input-field">
+                        </div>
+                    </div>
+
+                    <!-- Filtro por Producto -->
+                    <div class="filter-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Producto
+                        </label>
+                        <select id="product-filter" class="input-field">
+                            <option value="">Todos los productos</option>
+                            <option value="Producto">Producto 1</option>
+                            <option value="Producto">Producto 2</option>
+                            <option value="Producto">Producto 3</option>
+                            <option value="Producto">Producto 4</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Categoría -->
+                    <div class="filter-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Categoría
+                        </label>
+                        <select id="category-filter" class="input-field">
+                            <option value="">Todas las categorías</option>
+                            <option value="bebidas">Categoría 1</option>
+                            <option value="snacks">Categoría 2</option>
+                            <option value="dulces">Categoría 3</option>
+                            <option value="cigarros">Categoría 4</option>
+                        </select>
+                    </div>
+
+                    <!-- Filtro por Proveedor -->
+                    <div class="filter-section" id="supplier-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Proveedor
+                        </label>
+                        <select id="supplier-filter" class="input-field">
+                            <option value="">Todos los proveedores</option>
+                            <option value="Proveedor">Proveedor 1</option>
+                            <option value="Proveedor">Proveedor 2</option>
+                            <option value="Proveedor">Proveedor 3</option>
+                            <option value="Proveedor">Proveedor 4</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de Filtro -->
+                    <div class="space-y-3">
+                        <button id="apply-filters" class="btn-primary w-full">
+                            <i class="fas fa-search mr-2"></i>
+                            Aplicar Filtros
+                        </button>
+                        <button id="clear-filters" class="btn-secondary w-full">
+                            <i class="fas fa-times mr-2"></i>
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Contenido Principal -->
+            <section class="lg:col-span-3">
+                <!-- Selector de Tipo de Reporte -->
+                <div class="card p-6 mb-6 fade-in">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Tipo de Reporte</h3>
+                    <div class="flex flex-wrap gap-3" id="report-tabs">
+                        <button class="tab-button active" data-report="ventas">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Ventas
+                        </button>
+                        <button class="tab-button" data-report="compras">
+                            <i class="fas fa-truck mr-2"></i>
+                            Compras
+                        </button>
+                        <button class="tab-button" data-report="inventario">
+                            <i class="fas fa-boxes mr-2"></i>
+                            Inventario
+                        </button>
+                        <button class="tab-button" data-report="stockMinimo">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Stock Mínimo
+                        </button>
+                    </div>
+
+                    <!-- Selector de Período para Ventas -->
+                    <div id="period-selector" class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Período de Ventas:</label>
+                        <div class="flex gap-2">
+                            <button class="tab-button active" data-period="diario">Diario</button>
+                            <button class="tab-button" data-period="semanal">Semanal</button>
+                            <button class="tab-button" data-period="mensual">Mensual</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estadísticas Rápidas -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6" id="stats-section">
+                    <div class="stats-card fade-in">
+                        <div class="stats-number" id="stat-1">Bs. 45,230</div>
+                        <div class="stats-label">Total del Período</div>
+                    </div>
+                    <div class="stats-card fade-in">
+                        <div class="stats-number" id="stat-2">156</div>
+                        <div class="stats-label">Transacciones</div>
+                    </div>
+                    <div class="stats-card fade-in">
+                        <div class="stats-number" id="stat-3">Bs. 290</div>
+                        <div class="stats-label">Promedio</div>
+                    </div>
+                </div>
+
+                <!-- Panel de Visualización -->
+                <div class="card p-6 mb-6 fade-in" id="visualization-panel">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800" id="chart-title">
+                            <i class="fas fa-chart-line mr-2"></i>
+                            Reporte de Ventas
+                        </h3>
+                        <div class="flex items-center space-x-3">
+                            <button id="view-chart" class="btn-info active">
+                                <i class="fas fa-chart-bar mr-2"></i>
+                                Gráfico
+                            </button>
+                            <button id="view-table" class="btn-info">
+                                <i class="fas fa-table mr-2"></i>
+                                Tabla
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico -->
+                    <div id="chart-section">
+                        <div class="chart-container">
+                            <canvas id="main-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tabla -->
+                    <div id="table-section" class="hidden">
+                        <div class="overflow-x-auto">
+                            <table class="table w-full">
+                                <thead>
+                                    <tr id="table-headers">
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Total</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <!-- Datos se cargan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Estado de Carga -->
+                    <div id="loading-state" class="loading hidden">
+                        <i class="fas fa-spinner"></i>
+                        <span>Generando reporte...</span>
+                    </div>
+
+                    <!-- Estado Vacío -->
+                    <div id="empty-state" class="text-center py-12 hidden">
+                        <i class="fas fa-chart-bar text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">No hay datos para mostrar</h3>
+                        <p class="text-gray-500">Ajusta los filtros y genera un nuevo reporte</p>
+                    </div>
+                </div>
+
+                <!-- Acciones -->
+                <div class="card p-6 fade-in">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <button id="generate-report" class="btn-primary">
+                                <i class="fas fa-play mr-2"></i>
+                                Generar Reporte
+                            </button>
+                            <button id="export-pdf" class="btn-danger">
+                                <i class="fas fa-file-pdf mr-2"></i>
+                                Exportar PDF
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button id="export-excel" class="btn-success">
+                                <i class="fas fa-file-excel mr-2"></i>
+                                Exportar Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Variables globales
+        let currentChart = null;
+        let currentReportType = 'ventas';
+        let currentPeriod = 'diario';
+        let currentUserRole = 'super_admin'; // Cambiar según el usuario logueado
+        let currentView = 'chart';
+
+        // Datos de ejemplo
+        const reportData = {
+            ventas: {
+                diario: {
+                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                    data: [1200, 1900, 1500, 2500, 2200, 3000, 1800]
+                },
+                semanal: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                    data: [12000, 15000, 18000, 22000]
+                },
+                mensual: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                    data: [45000, 52000, 48000, 67000, 58000, 72000]
+                },
+                table: [
+                    { producto: 'Producto 1', cantidad: 156, precio: 2.50, total: 390.00, fecha: '2024-01-15' },
+                    { producto: 'Producto 2', cantidad: 89,  precio: 3.75, total: 333.75, fecha: '2024-01-15' },
+                    { producto: 'Producto 3', cantidad: 45,  precio: 8.50, total: 382.50, fecha: '2024-01-14' }
+                ],
+                stats: { total: 'Bs. 45,230', count: '156', average: 'Bs. 290' }
+            },
+            compras: {
+                chart: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                    data: [28000, 32000, 30000, 45000, 38000, 50000]
+                },
+                table: [
+                    { producto: 'Producto 1', cantidad: 200, precio: 1.80, total: 360.00, fecha: '2024-01-10' },
+                    { producto: 'Producto 2', cantidad: 100, precio: 2.50, total: 250.00, fecha: '2024-01-12' }
+                ],
+                stats: { total: 'Bs. 32,150', count: '89', average: 'Bs. 361' }
+            },
+            inventario: {
+                chart: {
+                    labels: ['Producto 1', 'Producto 2', 'Producto 3', 'Producto 4', 'Otros'],
+                    data: [450, 320, 180, 95, 125]
+                },
+                table: [
+                    { producto: 'Producto 1', cantidad: 156, precio: 2.50, total: 390.00, estado: 'Normal' },
+                    { producto: 'Producto 2', cantidad: 89, precio: 3.75, total: 333.75, estado: 'Normal' },
+                    { producto: 'Producto 3', cantidad: 8, precio: 8.50, total: 68.00, estado: 'Stock Mínimo' }
+                ],
+                stats: { total: '1,170', count: '5', average: '234' }
+            },
+            stockMinimo: {
+                chart: {
+                    labels: ['Crítico', 'Bajo', 'Normal'],
+                    data: [8, 15, 127]
+                },
+                table: [
+                    { producto: 'Producto 1', cantidad: 8, minimo: 20, precio: 8.50, estado: 'Crítico' },
+                    { producto: 'Producto 2', cantidad: 12, minimo: 25, precio: 2.30, estado: 'Crítico' },
+                    { producto: 'Producto 3', cantidad: 18, minimo: 30, precio: 1.50, estado: 'Bajo' }
+                ],
+                stats: { total: '23', count: '8', average: 'Crítico' }
+            }
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeReports();
+            setupEventListeners();
+            checkUserPermissions();
+            setDefaultDates();
+        });
+
+        function initializeReports() {
+            loadChart(currentReportType, currentPeriod);
+            updateStats(currentReportType);
+            updateTableHeaders(currentReportType);
+        }
+
+        function setupEventListeners() {
+            // Pestañas de reportes
+            document.querySelectorAll('[data-report]').forEach(button => {
+                button.addEventListener('click', function() {
+                    switchReportType(this.dataset.report);
+                });
+            });
+
+            // Selector de período
+            document.querySelectorAll('[data-period]').forEach(button => {
+                button.addEventListener('click', function() {
+                    switchPeriod(this.dataset.period);
+                });
+            });
+
+            // Controles de vista
+            document.getElementById('view-chart').addEventListener('click', () => switchView('chart'));
+            document.getElementById('view-table').addEventListener('click', () => switchView('table'));
+
+            // Filtros
+            document.getElementById('apply-filters').addEventListener('click', applyFilters);
+            document.getElementById('clear-filters').addEventListener('click', clearFilters);
+
+            // Acciones
+            document.getElementById('generate-report').addEventListener('click', generateReport);
+            document.getElementById('export-pdf').addEventListener('click', exportToPDF);
+            document.getElementById('export-excel').addEventListener('click', exportToExcel);
+        }
+
+        function checkUserPermissions() {
+            const roleElement = document.getElementById('user-role');
+            const permissionsElement = document.getElementById('user-permissions');
+            const tabs = document.querySelectorAll('.tab-button');
+            const supplierSection = document.getElementById('supplier-section');
+
+            if (currentUserRole === 'vendor') {
+                roleElement.textContent = 'VENDEDOR';
+                roleElement.className = 'role-badge role-vendor mb-2';
+                permissionsElement.textContent = 'Solo reportes de inventario';
+
+                // Ocultar pestañas no permitidas
+                tabs.forEach(tab => {
+                    if (!['inventario', 'stockMinimo'].includes(tab.dataset.report)) {
+                        tab.style.display = 'none';
+                    }
+                });
+
+                // Ocultar filtro de proveedor
+                supplierSection.style.display = 'none';
+
+                // Cambiar a inventario por defecto
+                switchReportType('inventario');
+
+                // Mostrar alerta informativa
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-info mb-6';
+                alert.innerHTML = `
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Como vendedor, solo tienes acceso a reportes básicos de inventario.
+                `;
+                document.querySelector('main').insertBefore(alert, document.querySelector('.grid'));
+            }
+        }
+
+        function setDefaultDates() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('date-from').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('date-to').value = today.toISOString().split('T')[0];
+        }
+
+        function switchReportType(reportType) {
+            currentReportType = reportType;
+            
+            // Actualizar pestañas de reporte
+            document.querySelectorAll('[data-report]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-report="${reportType}"]`).classList.add('active');
+
+            // Mostrar/ocultar selector de período
+            const periodSelector = document.getElementById('period-selector');
+            if (reportType === 'ventas') {
+                periodSelector.style.display = 'block';
+            } else {
+                periodSelector.style.display = 'none';
+            }
+
+            // Actualizar título
+            const titles = {
+                ventas: 'Reporte de Ventas',
+                compras: 'Reporte de Compras',
+                inventario: 'Reporte de Inventario',
+                stockMinimo: 'Productos con Stock Mínimo'
+            };
+            document.getElementById('chart-title').innerHTML = `
+                <i class="fas fa-chart-line mr-2"></i>
+                ${titles[reportType]}
+            `;
+
+            // Cargar datos
+            loadChart(reportType, currentPeriod);
+            updateStats(reportType);
+            updateTableHeaders(reportType);
+            loadTableData(reportType);
+        }
+
+        function switchPeriod(period) {
+            currentPeriod = period;
+            
+            // Actualizar pestañas de período
+            document.querySelectorAll('[data-period]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-period="${period}"]`).classList.add('active');
+
+            // Recargar gráfico con nuevo período
+            loadChart(currentReportType, period);
+        }
+
+        function loadChart(reportType, period = 'diario') {
+            const ctx = document.getElementById('main-chart').getContext('2d');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            let data, chartType, colors;
+            
+            if (reportType === 'ventas') {
+                data = reportData[reportType][period];
+                chartType = 'line';
+                colors = {
+                    backgroundColor: 'rgba(90, 0, 179, 0.1)',
+                    borderColor: '#5a00b3',
+                    pointBackgroundColor: '#5a00b3',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 3,
+                    pointRadius: 6
+                };
+            } else if (reportType === 'inventario') {
+                data = reportData[reportType].chart;
+                chartType = 'doughnut';
+                colors = {
+                    backgroundColor: ['#5a00b3', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3
+                };
+            } else if (reportType === 'stockMinimo') {
+                data = reportData[reportType].chart;
+                chartType = 'pie';
+                colors = {
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3
+                };
+            } else {
+                data = reportData[reportType].chart;
+                chartType = 'bar';
+                colors = {
+                    backgroundColor: 'rgba(90, 0, 179, 0.8)',
+                    borderColor: '#5a00b3',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    borderSkipped: false
+                };
+            }
+            
+            currentChart = new Chart(ctx, {
+                type: chartType,
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: getChartLabel(reportType),
+                        data: data.data,
+                        ...colors,
+                        tension: chartType === 'line' ? 0.4 : undefined
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: ['doughnut', 'pie'].includes(chartType),
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12,
+                                    family: 'Poppins'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#5a00b3',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true
+                        }
+                    },
+                    scales: !['doughnut', 'pie'].includes(chartType) ? {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Poppins'
+                                }
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    family: 'Poppins'
+                                },
+                                callback: function(value) {
+                                    return reportType === 'stockMinimo' ? value : 'Bs. ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    } : {},
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+        }
+
+        function getChartLabel(reportType) {
+            const labels = {
+                ventas: 'Ventas (Bs.)',
+                compras: 'Compras (Bs.)',
+                inventario: 'Stock por Categoría',
+                stockMinimo: 'Productos por Estado'
+            };
+            return labels[reportType] || 'Datos';
+        }
+
+        function updateStats(reportType) {
+            const stats = reportData[reportType].stats;
+            document.getElementById('stat-1').textContent = stats.total;
+            document.getElementById('stat-2').textContent = stats.count;
+            document.getElementById('stat-3').textContent = stats.average;
+
+            // Actualizar etiquetas según el tipo de reporte
+            const labels = document.querySelectorAll('.stats-label');
+            if (reportType === 'inventario') {
+                labels[0].textContent = 'Total Productos';
+                labels[1].textContent = 'Categorías';
+                labels[2].textContent = 'Promedio por Categoría';
+            } else {
+                labels[0].textContent = 'Total del Período';
+                labels[1].textContent = 'Transacciones';
+                labels[2].textContent = 'Promedio';
+            }
+        }
+
+        function updateTableHeaders(reportType) {
+            const headers = document.getElementById('table-headers');
+            
+            if (reportType === 'inventario') {
+                headers.innerHTML = `
+                    <th>Producto</th>
+                    <th>Stock Actual</th>
+                    <th>Precio</th>
+                    <th>Valor Total</th>
+                    <th>Estado</th>
+                `;
+            } else {
+                headers.innerHTML = `
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unit.</th>
+                    <th>Total</th>
+                    <th>Fecha</th>
+                `;
+            }
+        }
+
+        function loadTableData(reportType) {
+            const tbody = document.getElementById('table-body');
+            const data = reportData[reportType].table;
+            
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td class="font-medium">${item.producto}</td>
+                    <td>${item.cantidad}</td>
+                    <td>Bs. ${item.precio.toFixed(2)}</td>
+                    <td class="font-semibold text-green-600">Bs. ${item.total.toFixed(2)}</td>
+                    <td class="text-sm text-gray-500">${item.fecha}</td>
+                </tr>
+            `).join('');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const chartSection = document.getElementById('chart-section');
+            const tableSection = document.getElementById('table-section');
+            const chartBtn = document.getElementById('view-chart');
+            const tableBtn = document.getElementById('view-table');
+
+            // Remover clases activas
+            chartBtn.classList.remove('active');
+            tableBtn.classList.remove('active');
+
+            if (view === 'chart') {
+                chartSection.classList.remove('hidden');
+                tableSection.classList.add('hidden');
+                chartBtn.classList.add('active');
+            } else {
+                chartSection.classList.add('hidden');
+                tableSection.classList.remove('hidden');
+                tableBtn.classList.add('active');
+                loadTableData(currentReportType);
+            }
+        }
+
+        function applyFilters() {
+            showLoading();
+            
+            setTimeout(() => {
+                hideLoading();
+                loadChart(currentReportType);
+                updateStats(currentReportType);
+                if (currentView === 'table') {
+                    loadTableData(currentReportType);
+                }
+                showAlert('Filtros aplicados correctamente', 'success');
+            }, 1500);
+        }
+
+        function clearFilters() {
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            document.getElementById('product-filter').value = '';
+            document.getElementById('category-filter').value = '';
+            document.getElementById('supplier-filter').value = '';
+            
+            setDefaultDates();
+            showAlert('Filtros limpiados', 'info');
+        }
+
+        function generateReport() {
+            showLoading();
+            
+            setTimeout(() => {
+                hideLoading();
+                document.getElementById('visualization-panel').classList.remove('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                showAlert('Reporte generado exitosamente', 'success');
+            }, 2000);
+        }
+
+        function exportToPDF() {
+            showAlert('Exportando a PDF...', 'info');
+            
+            setTimeout(() => {
+                showAlert('Reporte exportado exitosamente', 'success');
+            }, 1500);
+        }
+
+        function exportToExcel() {
+            showAlert('Exportando a Excel...', 'info');
+            
+            setTimeout(() => {
+                showAlert('Reporte exportado exitosamente', 'success');
+            }, 1500);
+        }
+
+        function showLoading() {
+            document.getElementById('loading-state').classList.remove('hidden');
+            document.getElementById('chart-section').classList.add('hidden');
+            document.getElementById('table-section').classList.add('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-state').classList.add('hidden');
+            if (currentView === 'chart') {
+                document.getElementById('chart-section').classList.remove('hidden');
+            } else {
+                document.getElementById('table-section').classList.remove('hidden');
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm fade-in`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-yellow-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            alert.className += ` ${colors[type] || colors.info}`;
+            alert.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function loadDashboard() {
+            showAlert('Navegando al Dashboard...', 'info');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'992ada3837237104',t:'MTc2MTE1NTU4OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
