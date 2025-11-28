@@ -10,6 +10,7 @@ import proveedoresRoutes from './proveedores.js'
 import comprasRoutes from './compras.js'; 
 import categoriasRoutes from './categorias.js';
 import transformacionesRoutes from './transformaciones.js';
+import reportesRoutes from './reportes.js';
 
 export {
   authRoutes,
@@ -23,5 +24,6 @@ export {
   proveedoresRoutes,
   comprasRoutes,
   categoriasRoutes,
-  transformacionesRoutes
+  transformacionesRoutes,
+  reportesRoutes
 };

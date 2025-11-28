@@ -19,7 +19,8 @@ import {
   proveedoresRoutes,
   comprasRoutes,
   categoriasRoutes,
-  transformacionesRoutes
+  transformacionesRoutes,
+  reportesRoutes
 } from './routes/index.js';
 
 dotenv.config();
@@ -70,6 +71,7 @@ app.use(proveedoresRoutes);
 app.use(comprasRoutes);
 app.use(categoriasRoutes);
 app.use(transformacionesRoutes);
+app.use(reportesRoutes);
 
 // Servir archivos HTML del frontend
 fs.readdirSync(rutaFrontend).forEach(file => {
