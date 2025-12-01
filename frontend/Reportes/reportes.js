@@ -11,7 +11,18 @@ class ReportesManager {
     init() {
         this.setupEventListeners();
         this.setDefaultDates();
-        this.loadReport('ventas');
+        
+        // LEER PARÁMETRO DE LA URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const reportType = urlParams.get('reporte');
+        
+        if (reportType && ['ventas', 'compras', 'inventario'].includes(reportType)) {
+            // Si viene un reporte en la URL, cargamos ese
+            this.switchReportType(reportType);
+        } else {
+            // Si no, cargamos ventas por defecto
+            this.loadReport('ventas');
+        }
     }
 
     setupEventListeners() {
@@ -23,8 +34,20 @@ class ReportesManager {
 
         document.getElementById('view-chart').addEventListener('click', () => this.switchView('chart'));
         document.getElementById('view-table').addEventListener('click', () => this.switchView('table'));
-        document.getElementById('apply-filters').addEventListener('click', () => this.loadReport(this.currentReportType));
-        document.getElementById('clear-filters').addEventListener('click', () => { this.setDefaultDates(); this.loadReport(this.currentReportType); });
+
+
+        document.getElementById('apply-filters').addEventListener('click', () => {
+
+            document.querySelectorAll('[data-period]').forEach(btn => btn.classList.remove('active'));
+            
+            this.loadReport(this.currentReportType);
+        });
+
+        document.getElementById('clear-filters').addEventListener('click', () => { 
+            this.setDefaultDates(); 
+            this.loadReport(this.currentReportType); 
+        });
+
         document.getElementById('generate-report').addEventListener('click', () => this.loadReport(this.currentReportType));
         document.getElementById('export-pdf').addEventListener('click', () => this.exportToPDF());
         document.getElementById('export-excel').addEventListener('click', () => this.exportToExcel());
@@ -50,9 +73,13 @@ class ReportesManager {
     }
 
     switchPeriod(period) {
+        document.getElementById('date-from').value = '';
+        document.getElementById('date-to').value = '';
+
         this.currentPeriod = period;
         document.querySelectorAll('[data-period]').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`[data-period="${period}"]`).classList.add('active');
+        
         this.loadReport(this.currentReportType);
     }
 
@@ -90,8 +117,20 @@ class ReportesManager {
             this.renderTable(data.tableData, type);
             
             const hasData = this.currentTableData.length > 0;
-            document.getElementById('visualization-panel').classList.toggle('hidden', !hasData);
-            document.getElementById('empty-state').classList.toggle('hidden', hasData);
+            
+            document.getElementById('visualization-panel').classList.remove('hidden');
+            
+            if (hasData) {
+                document.getElementById('empty-state').classList.add('hidden');
+                
+                const currentView = document.getElementById('view-chart').classList.contains('active') ? 'chart' : 'table';
+                this.switchView(currentView);
+            } else {
+                document.getElementById('empty-state').classList.remove('hidden');
+                document.getElementById('chart-section').classList.add('hidden');
+                document.getElementById('table-section').classList.add('hidden');
+            }
+
         } catch (error) {
             console.error(error);
         } finally {
@@ -100,11 +139,23 @@ class ReportesManager {
     }
 
     updateStats(stats, type) {
+        // 1. Obtener referencias a los elementos del DOM
         const stat1 = document.getElementById('stat-1');
         const stat2 = document.getElementById('stat-2');
         const stat3 = document.getElementById('stat-3');
         const labels = document.querySelectorAll('.stats-label');
+        
+        // 2. Definir card3 (IMPORTANTE para que no dé error)
+        // Buscamos el contenedor padre con la clase .stats-card
+        const card3 = stat3 ? stat3.closest('.stats-card') : null;
+        
+        // 3. Resetear visibilidad y estilos por defecto
+        if (card3) {
+            card3.classList.remove('hidden');
+            card3.style.borderLeft = ''; // Limpiar colores anteriores
+        }
 
+        // 4. Lógica según el tipo de reporte
         if (type === 'ventas' || type === 'compras') {
             labels[0].textContent = type === 'ventas' ? 'Ingresos Totales' : 'Gastos Totales';
             labels[1].textContent = type === 'ventas' ? 'Transacciones' : 'Compras Realizadas';
@@ -113,22 +164,38 @@ class ReportesManager {
             stat1.textContent = `Bs. ${stats.total.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
             stat2.textContent = stats.count;
             stat3.textContent = `Bs. ${stats.average.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+
         } else if (type === 'inventario') {
             labels[0].textContent = 'Stock Total (Unid/Kg)';
             labels[1].textContent = 'Referencias Únicas';
-            labels[2].textContent = 'Promedio';
+            labels[2].textContent = ''; // Limpiar etiqueta
             
-            stat1.textContent = stats.total.toLocaleString('es-VE', {minimumFractionDigits: 2});
+            stat1.textContent = stats.total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             stat2.textContent = stats.count;
-            stat3.textContent = '-';
-        } else { // Stock Mínimo
-            labels[0].textContent = 'Productos en Alerta';
-            labels[1].textContent = 'Total Productos';
-            labels[2].textContent = 'Mínimo Configurado';
+            stat3.textContent = '';
             
-            stat1.textContent = stats.total; // Entero
-            stat2.textContent = stats.count; // Entero
-            stat3.textContent = stats.average; // Entero
+            // Ocultar la tarjeta 3 en inventario
+            if (card3) card3.classList.add('hidden');
+
+        } else { // Reporte de Stock Mínimo
+            labels[0].textContent = 'Total de Productos';
+            labels[1].textContent = 'Productos Críticos';
+            labels[2].textContent = 'Estado General';
+            
+            stat1.textContent = stats.total;
+            stat2.textContent = stats.count;
+            stat3.textContent = stats.average;
+            
+            // Aplicar colores semánticos al borde de la tarjeta 3
+            if (card3) {
+                if (stats.average === 'Crítico') {
+                    card3.style.borderLeft = '4px solid #ef4444'; // Rojo
+                } else if (stats.average === 'Bajo') {
+                    card3.style.borderLeft = '4px solid #f59e0b'; // Amarillo
+                } else {
+                    card3.style.borderLeft = '4px solid #10b981'; // Verde
+                }
+            }
         }
     }
 
@@ -137,7 +204,13 @@ class ReportesManager {
         if (this.currentChart) this.currentChart.destroy();
 
         let chartType = (type === 'ventas') ? 'line' : 'bar';
-        if (type === 'inventario' || type === 'stockMinimo') chartType = 'doughnut';
+        if (type === 'inventario') chartType = 'doughnut'; // Stock Mínimo usa gráfico aparte en index.html, aquí es inventario
+
+        // 🔧 FIX VISUAL: Si hay un solo dato (ej: un solo día o un solo mes),
+        // forzamos el tipo 'bar' (barra) porque una línea de un solo punto no se ve.
+        if ((type === 'ventas' || type === 'compras') && chartData.data.length === 1) {
+            chartType = 'bar';
+        }
 
         const colors = ['#5a00b3', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
@@ -148,17 +221,35 @@ class ReportesManager {
                 datasets: [{
                     label: (type === 'ventas' || type === 'compras') ? 'Monto (Bs)' : 'Cantidad',
                     data: chartData.data,
-                    backgroundColor: (chartType === 'doughnut') ? colors : 'rgba(90, 0, 179, 0.6)',
-                    borderColor: (chartType === 'line') ? '#5a00b3' : '#ffffff',
+                    // Ajuste de colores dinámico según el tipo de gráfico
+                    backgroundColor: (chartType === 'doughnut') ? colors : (chartType === 'bar' ? 'rgba(90, 0, 179, 0.7)' : 'rgba(90, 0, 179, 0.2)'),
+                    borderColor: '#5a00b3',
                     borderWidth: 2,
                     tension: 0.4,
-                    fill: type === 'ventas'
+                    fill: type === 'ventas' && chartType === 'line', // Solo rellenar si es línea de ventas
+                    pointRadius: 6, // Puntos más visibles
+                    pointHoverRadius: 8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: chartType === 'doughnut' } }
+                plugins: { 
+                    legend: { display: chartType === 'doughnut' },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: (chartType === 'doughnut') ? {} : {
+                    y: {
+                        beginAtZero: true,
+                        grid: { borderDash: [2, 4] }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
             }
         });
     }

@@ -84,7 +84,9 @@
   <script>
     const API_BASE = 'http://localhost:3000/api';
     let usuarioActual = null;
+    let dashboardChart = null; // Variable para controlar el gráfico
 
+    // Función genérica para peticiones
     async function fetchData(endpoint) {
       try {
         const res = await fetch(`${API_BASE}${endpoint}`, { credentials: 'include' });
@@ -96,73 +98,15 @@
       }
     }
 
-    function actualizarInfoUsuario(usuario) {
-      if (usuario) {
-        const iniciales = obtenerIniciales(usuario.nombre);
-        document.getElementById('userAvatar').textContent = iniciales;
-        document.getElementById('userName').textContent = usuario.nombre;
-        document.getElementById('userRole').textContent = usuario.rol;
-        usuarioActual = usuario;
-        
-        // Aplicar restricciones de menú según el rol
-        aplicarRestriccionesPorRol(usuario);
-      }
-    }
-
-    function aplicarRestriccionesPorRol(usuario) {
-      const rol = usuario.rol;
-      
-      // Obtener todos los elementos del menú
-      const elementosMenu = {
-        'dashboard': document.querySelector('a[onclick*="loadDashboard"]').closest('li'),
-        'ventas': document.querySelector('button[onclick*="ventas-submenu"]').closest('li'),
-        'inventario': document.querySelector('button[onclick*="inventario-submenu"]').closest('li'),
-        'compras': document.querySelector('button[onclick*="compras-submenu"]').closest('li'),
-        'reportes': document.querySelector('a[href*="Reportes.html"]').closest('li'),
-        'configuracion': document.querySelector('a[href*="Configuracion.html"]').closest('li'),
-        'clientes': document.querySelector('a[href*="clientes.html"]').closest('li'),
-        'usuarios': document.querySelector('a[href*="GestionU.html"]').closest('li')
-      };
-
-      // Ocultar todo primero
-      Object.values(elementosMenu).forEach(element => {
-        if (element) element.style.display = 'none';
-      });
-
-      // Mostrar según rol
-      if (rol === 'Vendedor') {
-        // Vendedor: solo Ventas e Inventario
-        if (elementosMenu.ventas) elementosMenu.ventas.style.display = '';
-        if (elementosMenu.inventario) elementosMenu.inventario.style.display = '';
-      } 
-      else if (rol === 'Administrador') {
-        // Admin: todo menos Compras y Configuración
-        if (elementosMenu.dashboard) elementosMenu.dashboard.style.display = '';
-        if (elementosMenu.ventas) elementosMenu.ventas.style.display = '';
-        if (elementosMenu.inventario) elementosMenu.inventario.style.display = '';
-        if (elementosMenu.reportes) elementosMenu.reportes.style.display = '';
-        if (elementosMenu.clientes) elementosMenu.clientes.style.display = '';
-        if (elementosMenu.usuarios) elementosMenu.usuarios.style.display = '';
-      } 
-      else if (rol === 'Super Admin') {
-        // Super Admin: acceso completo
-        Object.values(elementosMenu).forEach(element => {
-          if (element) element.style.display = '';
-        });
-      }
-      
-      console.log(`✅ Restricciones aplicadas para rol: ${rol}`);
-    }
-
-    function obtenerIniciales(nombre) {
-      return nombre.split(' ').map(p => p.charAt(0)).join('').toUpperCase().substring(0, 2);
-    }
-
+    // Carga del Dashboard Principal
     async function loadDashboard() {
       const main = document.getElementById('contenidoPrincipal');
-      main.innerHTML = `<p style="text-align:center;">Cargando datos...</p>`;
+      main.innerHTML = `<div style="text-align:center; padding: 2rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Cargando datos...</p></div>`;
+      
       try {
+        // 1. Cargar Estadísticas Generales
         const stats = await fetchData('/dashboard/stats');
+        
         main.innerHTML = `
           <section class="dashboard-cards-custom">
             <div class="card_wrap">
@@ -173,6 +117,7 @@
                 <a href="Inventario/Productos.html" class="card_btn uno">Ver</a>
               </div>
             </div>
+
             <div class="card_wrap">
               <div class="card_header dos"><p>${stats.ventasHoy}</p></div>
               <div class="card_content">
@@ -181,6 +126,7 @@
                 <a href="Ventas/Facturas_ventas.html?fecha=${new Date().toISOString().split('T')[0]}" class="card_btn dos">Ver</a>
               </div>
             </div>
+
             <div class="card_wrap">
               <div class="card_header tres"><p>${stats.totalProveedores}</p></div>
               <div class="card_content">
@@ -189,47 +135,160 @@
                 <a href="Compras/Proveedores.html" class="card_btn tres">Ver</a>
               </div>
             </div>
+
             <div class="card_wrap">
               <div class="card_header cuatro"><p>${stats.productosStockMinimo}</p></div>
               <div class="card_content">
                 <h1 class="card_title"><b>Stock mínimo</b></h1>
                 <p class="card_text">Productos con bajo inventario.</p>
-                <a href="Inventario/Productos.html" class="card_btn cuatro">Ver</a>
+                <a href="Inventario/Productos.html?filtro=bajo" class="card_btn cuatro">Gestionar</a>
               </div>
             </div>
           </section>
-          <h2>Productos más vendidos</h2>
-          <canvas id="graficoTorta" width="400" height="200"></canvas>
+
+          <div style="margin-top: 30px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+              <h2 style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; text-align: center; color: #333;">Productos más vendidos (Mes Actual)</h2>
+              <div style="width: 100%; max-width: 350px; margin: 0 auto; height: 350px; position: relative;">
+                <canvas id="graficoTorta"></canvas>
+              </div>
+          </div>
         `;
-        const ctx = document.getElementById('graficoTorta').getContext('2d');
-        new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: ['Producto A', 'Producto B', 'Producto C'],
-            datasets: [{ data: [12, 19, 7], backgroundColor: ['#5a00b3', '#3498db', '#2ecc71'] }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { position: 'bottom' }
-            }
-          }
-        });
+
+        // 2. Cargar y Renderizar Gráfico Real
+        await renderizarGrafico();
+
       } catch (err) {
         console.error('Error cargando dashboard:', err);
         main.innerHTML = `
           <div style="text-align: center; padding: 2rem;">
-            <p style="color: #e74c3c; margin-bottom: 1rem;">No se pudieron cargar los datos del dashboard.</p>
+            <p style="color: #e74c3c; margin-bottom: 1rem;">No se pudo conectar con el servidor.</p>
             <button onclick="loadDashboard()" class="card_btn uno">Reintentar</button>
           </div>
         `;
       }
     }
 
+    // Función separada para el gráfico (evita errores de anidación)
+    async function renderizarGrafico() {
+        try {
+            // Destruir gráfico anterior si existe para evitar conflictos
+            if (dashboardChart) {
+                dashboardChart.destroy();
+                dashboardChart = null;
+            }
+
+            const ctx = document.getElementById('graficoTorta');
+            if (!ctx) return;
+
+            const resGrafico = await fetchData('/ventas/top-productos');
+            
+            if (!resGrafico || resGrafico.length === 0) {
+                // Mensaje si no hay datos
+                const parent = ctx.parentElement;
+                parent.innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:#888;"><p>Sin ventas este mes</p></div>';
+                return;
+            }
+
+            const etiquetas = resGrafico.map(p => p.nombre);
+            const valores = resGrafico.map(p => parseFloat(p.cantidad));
+            
+            // Colores de la marca
+            const colores = ['#5a00b3', '#2ecc71', '#3498db', '#f59e0b', '#e74c3c', '#9b59b6'];
+
+            dashboardChart = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{ 
+                        data: valores, 
+                        backgroundColor: colores.slice(0, valores.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { 
+                                boxWidth: 12, 
+                                padding: 15,
+                                font: { size: 11 }
+                            } 
+                        }
+                    },
+                    layout: { padding: 10 }
+                }
+            });
+
+        } catch (error) {
+            console.error("Error gráfico:", error);
+        }
+    }
+
+    // Funciones de Usuario y Menú
+    function actualizarInfoUsuario(usuario) {
+      if (usuario) {
+        const iniciales = obtenerIniciales(usuario.nombre);
+        document.getElementById('userAvatar').textContent = iniciales;
+        document.getElementById('userName').textContent = usuario.nombre;
+        document.getElementById('userRole').textContent = usuario.rol;
+        usuarioActual = usuario;
+        
+        aplicarRestriccionesPorRol(usuario);
+      }
+    }
+
+    function aplicarRestriccionesPorRol(usuario) {
+      const rol = usuario.rol;
+      const sidebar = document.getElementById('sidebar');
+      if (!sidebar) return;
+
+      // Selectores para encontrar los elementos del menú
+      const items = {
+        'dashboard': sidebar.querySelector('a[onclick*="loadDashboard"]')?.parentElement,
+        'ventas': sidebar.querySelector('button[onclick*="ventas-submenu"]')?.parentElement,
+        'inventario': sidebar.querySelector('button[onclick*="inventario-submenu"]')?.parentElement,
+        'compras': sidebar.querySelector('button[onclick*="compras-submenu"]')?.parentElement,
+        'reportes': sidebar.querySelector('a[href*="Reportes.html"]')?.parentElement,
+        'configuracion': sidebar.querySelector('a[href*="Configuracion.html"]')?.parentElement,
+        'clientes': sidebar.querySelector('a[href*="clientes.html"]')?.parentElement,
+        'usuarios': sidebar.querySelector('a[href*="GestionU.html"]')?.parentElement
+      };
+
+      // Ocultar todo primero
+      Object.values(items).forEach(el => { if(el) el.style.display = 'none'; });
+
+      // Mostrar según rol
+      if (rol === 'Vendedor') {
+        if(items.ventas) items.ventas.style.display = '';
+        if(items.inventario) items.inventario.style.display = '';
+      } 
+      else if (rol === 'Administrador') {
+        if(items.dashboard) items.dashboard.style.display = '';
+        if(items.ventas) items.ventas.style.display = '';
+        if(items.inventario) items.inventario.style.display = '';
+        if(items.reportes) items.reportes.style.display = '';
+        if(items.clientes) items.clientes.style.display = '';
+        if(items.usuarios) items.usuarios.style.display = '';
+      } 
+      else if (rol === 'Super Admin') {
+        // Mostrar todo
+        Object.values(items).forEach(el => { if(el) el.style.display = ''; });
+      }
+    }
+
+    function obtenerIniciales(nombre) {
+      return nombre ? nombre.split(' ').map(p => p.charAt(0)).join('').toUpperCase().substring(0, 2) : 'U';
+    }
+
     function toggleSubmenu(id, btn) {
       const submenu = document.getElementById(id);
-      submenu.classList.toggle('open');
-      btn.classList.toggle('open');
+      if (submenu) submenu.classList.toggle('open');
+      if (btn) btn.classList.toggle('open');
     }
 
     function setActive(el) {
@@ -238,12 +297,14 @@
     }
 
     function toggleUserMenu() {
-      document.getElementById('userDropdown').classList.toggle('active');
+      const menu = document.getElementById('userDropdown');
+      if (menu) menu.classList.toggle('active');
     }
 
     function closeUserMenu() {
       setTimeout(() => {
-        document.getElementById('userDropdown').classList.remove('active');
+        const menu = document.getElementById('userDropdown');
+        if (menu) menu.classList.remove('active');
       }, 150);
     }
 
@@ -252,13 +313,37 @@
     }
 
     async function logout() {
-      await authChecker.logout();
+        console.log('Cerrando sesión...');
+        
+        try {
+            // 1. Intentar matar sesión en servidor
+            await fetch(`${API_BASE.replace('/api', '')}/logout`, { 
+                method: 'POST', 
+                credentials: 'include' 
+            });
+        } catch (error) {
+            console.error('Error contactando servidor:', error);
+        } finally {
+            // 2. DESTRUIR datos locales (Esto es lo que rompe el bucle)
+            localStorage.removeItem('usuario');
+            sessionStorage.clear(); // Limpia cualquier rastro de redirección
+            
+            // 3. Redirigir al login
+            window.location.href = '/login.html';
+        }
     }
 
-    // ✅ Carga automática al iniciar
+    // Inicialización al cargar la página
     window.addEventListener('DOMContentLoaded', async () => {
       try {
-          const usuario = await authChecker.getCurrentUser();
+          // Usamos authChecker si está disponible, si no, fallback manual
+          let usuario = null;
+          if (window.authChecker) {
+              usuario = await authChecker.getCurrentUser();
+          } else {
+              const res = await fetch(`${API_BASE}/me`, { credentials: 'include' });
+              if (res.ok) usuario = await res.json();
+          }
           
           if (!usuario) {
               window.location.href = '/login.html';
@@ -269,8 +354,7 @@
           loadDashboard();
           
       } catch (err) {
-          console.error('❌ Error cargando usuario:', err);
-          window.location.href = '/login.html';
+          console.error('❌ Error inicializando app:', err);
       }
     });
   </script>

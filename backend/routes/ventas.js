@@ -678,23 +678,38 @@ router.post('/api/cierre-caja', requireAuth, async (req, res) => {
 });
 
 
+// GET Top Productos (Dashboard)
 router.get('/api/ventas/top-productos', requireAuth, async (req, res) => {
   try {
     const { fecha } = req.query;
-    const result = await pool.query(`
+    let query = `
       SELECT 
         p.nombre,
-        SUM(dv.cantidad) as cantidad,
-        SUM(dv.cantidad * dv.precio_unitario) as total
+        SUM(dv.cantidad) as cantidad
       FROM detalle_venta dv
       JOIN productos p ON dv.id_producto = p.id
       JOIN ventas v ON dv.id_venta = v.id
-      WHERE DATE(v.fecha_venta) = $1
+      WHERE v.estado = 'completada'
+    `;
+    
+    const params = [];
+
+    if (fecha) {
+        // Si piden una fecha específica (filtro)
+        query += ` AND DATE(v.fecha_venta) = $1`;
+        params.push(fecha);
+    } else {
+        // Si no (Dashboard), mostrar TOP del mes actual
+        query += ` AND DATE_TRUNC('month', v.fecha_venta) = DATE_TRUNC('month', CURRENT_DATE)`;
+    }
+
+    query += `
       GROUP BY p.id, p.nombre
       ORDER BY cantidad DESC
-      LIMIT 10
-    `, [fecha]);
+      LIMIT 5
+    `;
 
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error obteniendo top productos:', error);

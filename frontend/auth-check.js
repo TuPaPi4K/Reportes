@@ -96,8 +96,10 @@ class AuthChecker {
             const response = await fetch(`${this.API_BASE}/sesion`, {
                 method: 'GET',
                 credentials: 'include',
+                cache: 'no-store',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Pragma': 'no-cache'
                 }
             });
 

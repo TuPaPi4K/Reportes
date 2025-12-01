@@ -20,10 +20,22 @@ class ProductosManager {
 
     async init() {
         try {
+            const params = new URLSearchParams(window.location.search);
+            const filtroUrl = params.get('filtro');
+
+            if (filtroUrl === 'bajo') {
+                this.filtros.stock = 'bajo'; 
+                setTimeout(() => {
+                    const select = document.querySelector('#filtro-stock');
+                    if(select) select.value = 'bajo';
+                }, 500);
+            }
+
             await this.cargarDatosIniciales();
             this.setupEventListeners();
             this.actualizarResumen();
             console.log('✅ Sistema de productos inicializado');
+            
         } catch (error) {
             console.error('Error inicializando productos:', error);
             this.mostrarError('Error al inicializar el sistema de productos');

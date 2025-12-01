@@ -8,6 +8,8 @@ const router = express.Router();
 router.get('/api/reportes/ventas', requireAuth, async (req, res) => {
     try {
         const { periodo, fecha_inicio, fecha_fin } = req.query;
+        
+        // 1. Configuración de Agrupamiento (Para la Gráfica)
         let groupBy, dateFormat, orderBy;
 
         switch (periodo) {
@@ -21,24 +23,42 @@ router.get('/api/reportes/ventas', requireAuth, async (req, res) => {
                 dateFormat = "To_Char(DATE_TRUNC('month', v.fecha_venta), 'Mon YYYY')";
                 orderBy = "DATE_TRUNC('month', v.fecha_venta)";
                 break;
-            default: 
+            default: // Diario
                 groupBy = "DATE(v.fecha_venta)";
                 dateFormat = "To_Char(DATE(v.fecha_venta), 'DD/MM/YYYY')";
                 orderBy = "DATE(v.fecha_venta)";
         }
 
+        // 2. Configuración de Filtros de Fecha (Para los Datos/Cards)
         const params = [];
         let dateFilter = "";
         
-        if (fecha_inicio) {
+        if (fecha_inicio && fecha_fin) {
+            // Caso A: Rango personalizado (Tiene prioridad)
             params.push(fecha_inicio);
             dateFilter += ` AND DATE(v.fecha_venta) >= $${params.length}`;
-        }
-        if (fecha_fin) {
             params.push(fecha_fin);
             dateFilter += ` AND DATE(v.fecha_venta) <= $${params.length}`;
+        } else {
+            // Caso B: Filtros automáticos por botón (Aquí estaba el fallo)
+            switch (periodo) {
+                case 'semanal':
+                    // Filtra desde el Lunes de la semana actual
+                    dateFilter += " AND v.fecha_venta >= DATE_TRUNC('week', CURRENT_DATE)";
+                    break;
+                case 'mensual':
+                    // Filtra desde el día 1 del mes actual
+                    dateFilter += " AND v.fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)";
+                    break;
+                case 'diario':
+                default:
+                    // Filtra solo hoy (dejando diario igual como pediste, pero asegurando que sea "hoy")
+                    dateFilter += " AND DATE(v.fecha_venta) = CURRENT_DATE";
+                    break;
+            }
         }
 
+        // 3. Consulta Principal (Gráfica y Tabla)
         const query = `
             SELECT 
                 ${dateFormat} as label,
@@ -56,6 +76,8 @@ router.get('/api/reportes/ventas', requireAuth, async (req, res) => {
 
         const result = await pool.query(query, params);
 
+        // 4. Consulta de Estadísticas (Cards)
+        // Ahora usa el mismo dateFilter, por lo que los totales coincidirán con el periodo
         const statsQuery = `
             SELECT 
                 COUNT(*)::int as total_transacciones,
@@ -96,56 +118,80 @@ router.get('/api/reportes/ventas', requireAuth, async (req, res) => {
 // 2. REPORTE DE COMPRAS
 router.get('/api/reportes/compras', requireAuth, async (req, res) => {
     try {
-        const { fecha_inicio, fecha_fin } = req.query;
-        const params = [];
-        let dateFilter = "";
+        const { periodo, fecha_inicio, fecha_fin } = req.query;
         
-        if (fecha_inicio) {
-            params.push(fecha_inicio);
-            dateFilter += ` AND c.fecha_compra >= $${params.length}`;
+        // 1. Construcción dinámica del filtro de fecha
+        let fechaFilter = "";
+        const queryParams = [];
+        
+        if (fecha_inicio && fecha_fin) {
+            // Rango personalizado
+            fechaFilter = "AND fecha_compra >= $1 AND fecha_compra <= $2";
+            queryParams.push(fecha_inicio, fecha_fin);
+        } else {
+            // Filtros predefinidos
+            switch (periodo) {
+                case 'diario':
+                    fechaFilter = "AND DATE(fecha_compra) = CURRENT_DATE";
+                    break;
+                case 'semanal':
+                    // Semana actual (desde el lunes)
+                    fechaFilter = "AND fecha_compra >= DATE_TRUNC('week', CURRENT_DATE)";
+                    break;
+                case 'mensual':
+                    // Mes actual (desde el día 1)
+                    fechaFilter = "AND fecha_compra >= DATE_TRUNC('month', CURRENT_DATE)";
+                    break;
+                default:
+                    // Si no hay filtro, limitamos a los últimos 30 días por seguridad
+                    fechaFilter = "AND fecha_compra >= CURRENT_DATE - INTERVAL '30 days'";
+            }
         }
-        if (fecha_fin) {
-            params.push(fecha_fin);
-            dateFilter += ` AND c.fecha_compra <= $${params.length}`;
-        }
 
-        const query = `
-            SELECT 
-                To_Char(DATE(c.fecha_compra), 'DD/MM/YYYY') as label,
-                COUNT(c.id)::int as transacciones,
-                COALESCE(SUM(c.total), 0) as total_monto
-            FROM compras c
-            WHERE c.estado != 'cancelada' ${dateFilter}
-            GROUP BY DATE(c.fecha_compra)
-            ORDER BY DATE(c.fecha_compra) ASC
-        `;
-
-        const result = await pool.query(query, params);
-
+        // 2. Consulta de Estadísticas (Totales)
         const statsQuery = `
-            SELECT COUNT(*)::int as count, COALESCE(SUM(total), 0) as total
-            FROM compras c WHERE c.estado != 'cancelada' ${dateFilter}
+            SELECT 
+                COALESCE(SUM(total), 0) as total,
+                COUNT(*)::int as count,
+                COALESCE(AVG(total), 0) as average
+            FROM compras 
+            WHERE 1=1 ${fechaFilter}
         `;
-        const statsRes = await pool.query(statsQuery, params);
-        const stats = statsRes.rows[0] || { count: 0, total: 0 };
+        const statsResult = await pool.query(statsQuery, queryParams);
 
+        // 3. Consulta para Gráfico y Tabla (Agrupado por día)
+        const dataQuery = `
+            SELECT 
+                to_char(fecha_compra, 'YYYY-MM-DD') as fecha_dia,
+                COUNT(*)::int as transacciones,
+                COALESCE(SUM(total), 0) as total_dia
+            FROM compras
+            WHERE 1=1 ${fechaFilter}
+            GROUP BY 1
+            ORDER BY 1 ASC
+        `;
+        const dataResult = await pool.query(dataQuery, queryParams);
+
+        // 4. Formatear respuesta
         res.json({
-            chartData: {
-                labels: result.rows.map(r => r.label),
-                data: result.rows.map(r => parseFloat(r.total_monto))
-            },
             stats: {
-                total: parseFloat(stats.total),
-                count: parseInt(stats.count),
-                average: stats.count > 0 ? (stats.total / stats.count) : 0
+                total: parseFloat(statsResult.rows[0].total),
+                count: parseInt(statsResult.rows[0].count),
+                average: parseFloat(statsResult.rows[0].average)
             },
-            tableData: result.rows.map(r => ({
-                fecha: r.label,
-                transacciones: parseInt(r.transacciones),
-                total: parseFloat(r.total_monto)
+            chartData: {
+                labels: dataResult.rows.map(r => r.fecha_dia),
+                data: dataResult.rows.map(r => parseFloat(r.total_dia))
+            },
+            tableData: dataResult.rows.map(r => ({
+                fecha: r.fecha_dia,
+                transacciones: r.transacciones,
+                total: parseFloat(r.total_dia)
             }))
         });
+
     } catch (error) {
+        console.error('Error en reporte de compras:', error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -194,37 +240,52 @@ router.get('/api/reportes/inventario', requireAuth, async (req, res) => {
 // 4. REPORTE DE STOCK MÍNIMO
 router.get('/api/reportes/stock-minimo', requireAuth, async (req, res) => {
     try {
-        const configRes = await pool.query('SELECT stock_minimo FROM configuracion_negocio ORDER BY id DESC LIMIT 1');
-        const minStock = configRes.rows[0]?.stock_minimo || 10;
-
+        // 1. Obtener conteo por estados (Agotado, Crítico, Normal)
         const query = `
             SELECT 
                 CASE 
                     WHEN stock <= 0 THEN 'Agotado'
-                    WHEN stock <= $1 THEN 'Crítico'
+                    WHEN stock <= stock_minimo THEN 'Crítico'
                     ELSE 'Normal'
                 END as estado,
                 COUNT(*)::int as cantidad
             FROM productos
-            GROUP BY estado
+            WHERE estado = 'Activo'
+            GROUP BY 1
         `;
-        const result = await pool.query(query, [minStock]);
+        const result = await pool.query(query);
 
+        // 2. Lista detallada para la tabla (productos en alerta)
         const criticalQuery = `
-            SELECT nombre as producto, stock as cantidad, $1::int as minimo, precio_venta as precio
+            SELECT nombre as producto, stock as cantidad, stock_minimo as minimo, precio_venta as precio
             FROM productos 
-            WHERE stock <= $1
+            WHERE stock <= stock_minimo AND estado = 'Activo'
             ORDER BY stock ASC
         `;
-        const criticalResult = await pool.query(criticalQuery, [minStock]);
+        const criticalResult = await pool.query(criticalQuery);
 
+        // 3. Totales generales para las cards
+        // Calculamos el total de productos activos
+        const totalQuery = "SELECT COUNT(*)::int as total FROM productos WHERE estado = 'Activo'";
+        const totalRes = await pool.query(totalQuery);
+        const totalProductos = parseInt(totalRes.rows[0].total || 0);
+
+        // Calculamos cuántos están en alerta (Agotado + Crítico)
+        const totalCriticos = criticalResult.rows.length;
+
+        // 4. Lógica para la tarjeta "Promedio" (Determinamos la salud del inventario)
+        // Si más del 20% del inventario está crítico, el estado general es "Crítico"
+        let estadoGeneral = "Normal";
+        if (totalProductos > 0) {
+            const ratioCritico = totalCriticos / totalProductos;
+            if (ratioCritico > 0.5) estadoGeneral = "Crítico"; // Más del 50% mal
+            else if (ratioCritico > 0.1) estadoGeneral = "Bajo"; // Más del 10% mal
+        }
+
+        // Mapeo de datos para el gráfico
         const labels = ['Agotado', 'Crítico', 'Normal'];
         const dataMap = {};
         result.rows.forEach(row => dataMap[row.estado] = parseInt(row.cantidad));
-        
-        // Totales para las cards
-        const totalCriticos = criticalResult.rows.length;
-        const totalProductos = result.rows.reduce((a, b) => a + parseInt(b.cantidad), 0);
 
         res.json({
             chartData: { labels, data: labels.map(l => dataMap[l] || 0) },
@@ -235,12 +296,20 @@ router.get('/api/reportes/stock-minimo', requireAuth, async (req, res) => {
                 estado: r.cantidad <= 0 ? 'Agotado' : 'Crítico'
             })),
             stats: {
-                total: totalCriticos,
-                count: totalProductos,
-                average: minStock
+                // AQUÍ AJUSTAMOS LOS VALORES PARA COINCIDIR CON TUS ETIQUETAS:
+                
+                // Card 1: "Total del Periodo" -> Enviamos el Total de Productos (ej. 23)
+                total: totalProductos, 
+                
+                // Card 2: "Transacciones" -> Enviamos la Cantidad de Alertas (ej. 8)
+                count: totalCriticos, 
+                
+                // Card 3: "Promedio" -> Enviamos el Estado General (ej. "Crítico" o "Normal")
+                average: estadoGeneral 
             }
         });
     } catch (error) {
+        console.error('Error en reporte stock mínimo:', error);
         res.status(500).json({ error: error.message });
     }
 });
