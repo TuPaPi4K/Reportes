@@ -17,10 +17,8 @@ class ReportesManager {
         const reportType = urlParams.get('reporte');
         
         if (reportType && ['ventas', 'compras', 'inventario'].includes(reportType)) {
-            // Si viene un reporte en la URL, cargamos ese
             this.switchReportType(reportType);
         } else {
-            // Si no, cargamos ventas por defecto
             this.loadReport('ventas');
         }
     }
@@ -37,9 +35,7 @@ class ReportesManager {
 
 
         document.getElementById('apply-filters').addEventListener('click', () => {
-
             document.querySelectorAll('[data-period]').forEach(btn => btn.classList.remove('active'));
-            
             this.loadReport(this.currentReportType);
         });
 
@@ -139,23 +135,18 @@ class ReportesManager {
     }
 
     updateStats(stats, type) {
-        // 1. Obtener referencias a los elementos del DOM
         const stat1 = document.getElementById('stat-1');
         const stat2 = document.getElementById('stat-2');
         const stat3 = document.getElementById('stat-3');
         const labels = document.querySelectorAll('.stats-label');
         
-        // 2. Definir card3 (IMPORTANTE para que no dé error)
-        // Buscamos el contenedor padre con la clase .stats-card
         const card3 = stat3 ? stat3.closest('.stats-card') : null;
         
-        // 3. Resetear visibilidad y estilos por defecto
         if (card3) {
             card3.classList.remove('hidden');
-            card3.style.borderLeft = ''; // Limpiar colores anteriores
+            card3.style.borderLeft = ''; 
         }
 
-        // 4. Lógica según el tipo de reporte
         if (type === 'ventas' || type === 'compras') {
             labels[0].textContent = type === 'ventas' ? 'Ingresos Totales' : 'Gastos Totales';
             labels[1].textContent = type === 'ventas' ? 'Transacciones' : 'Compras Realizadas';
@@ -168,16 +159,15 @@ class ReportesManager {
         } else if (type === 'inventario') {
             labels[0].textContent = 'Stock Total (Unid/Kg)';
             labels[1].textContent = 'Referencias Únicas';
-            labels[2].textContent = ''; // Limpiar etiqueta
+            labels[2].textContent = 'Valor del Inventario';
             
-            stat1.textContent = stats.total.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            stat1.textContent = stats.total.toLocaleString('es-VE', {maximumFractionDigits: 2});
             stat2.textContent = stats.count;
-            stat3.textContent = '';
+            stat3.textContent = `Bs. ${stats.average.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             
-            // Ocultar la tarjeta 3 en inventario
-            if (card3) card3.classList.add('hidden');
+            if (card3) card3.style.borderLeft = '4px solid #2ecc71'; 
 
-        } else { // Reporte de Stock Mínimo
+        } else { // Stock Mínimo
             labels[0].textContent = 'Total de Productos';
             labels[1].textContent = 'Productos Críticos';
             labels[2].textContent = 'Estado General';
@@ -186,15 +176,10 @@ class ReportesManager {
             stat2.textContent = stats.count;
             stat3.textContent = stats.average;
             
-            // Aplicar colores semánticos al borde de la tarjeta 3
             if (card3) {
-                if (stats.average === 'Crítico') {
-                    card3.style.borderLeft = '4px solid #ef4444'; // Rojo
-                } else if (stats.average === 'Bajo') {
-                    card3.style.borderLeft = '4px solid #f59e0b'; // Amarillo
-                } else {
-                    card3.style.borderLeft = '4px solid #10b981'; // Verde
-                }
+                if (stats.average === 'Crítico') card3.style.borderLeft = '4px solid #ef4444';
+                else if (stats.average === 'Bajo') card3.style.borderLeft = '4px solid #f59e0b';
+                else card3.style.borderLeft = '4px solid #10b981';
             }
         }
     }
@@ -203,16 +188,27 @@ class ReportesManager {
         const ctx = document.getElementById('main-chart').getContext('2d');
         if (this.currentChart) this.currentChart.destroy();
 
+        // Tipos de gráfico
         let chartType = (type === 'ventas') ? 'line' : 'bar';
-        if (type === 'inventario') chartType = 'doughnut'; // Stock Mínimo usa gráfico aparte en index.html, aquí es inventario
+        if (type === 'inventario') chartType = 'doughnut';
 
-        // 🔧 FIX VISUAL: Si hay un solo dato (ej: un solo día o un solo mes),
-        // forzamos el tipo 'bar' (barra) porque una línea de un solo punto no se ve.
-        if ((type === 'ventas' || type === 'compras') && chartData.data.length === 1) {
+        // Fix visual: Si hay 1 solo dato en ventas, usar barra
+        if (type === 'ventas' && chartData.data.length === 1) {
             chartType = 'bar';
         }
 
-        const colors = ['#5a00b3', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
+        // Configuración de Colores
+        let mainColor = '#5a00b3'; // Morado (Ventas)
+        let bgColor = 'rgba(90, 0, 179, 0.2)'; // Relleno suave
+
+        if (type === 'compras') {
+            mainColor = '#5a00b3'; // Rojo (Compras)
+            bgColor = 'rgba(90, 0, 179, 0.2)'; // Barra roja sólida
+        } else if (chartType === 'bar' && type !== 'compras') {
+            bgColor = 'rgba(90, 0, 179, 0.7)';
+        }
+
+        const doughnutColors = ['#5a00b3', '#10b981', '#f59e0b', '#ef4444', '#3b82f6'];
 
         this.currentChart = new Chart(ctx, {
             type: chartType,
@@ -221,13 +217,15 @@ class ReportesManager {
                 datasets: [{
                     label: (type === 'ventas' || type === 'compras') ? 'Monto (Bs)' : 'Cantidad',
                     data: chartData.data,
-                    // Ajuste de colores dinámico según el tipo de gráfico
-                    backgroundColor: (chartType === 'doughnut') ? colors : (chartType === 'bar' ? 'rgba(90, 0, 179, 0.7)' : 'rgba(90, 0, 179, 0.2)'),
-                    borderColor: '#5a00b3',
-                    borderWidth: 2,
+                    backgroundColor: (chartType === 'doughnut') ? doughnutColors : bgColor,
+                    borderColor: mainColor,
+                    
+                    borderWidth: (chartType === 'doughnut') ? 0 : 2,
+                    hoverOffset: (chartType === 'doughnut') ? 20 : 0,
+
                     tension: 0.4,
-                    fill: type === 'ventas' && chartType === 'line', // Solo rellenar si es línea de ventas
-                    pointRadius: 6, // Puntos más visibles
+                    fill: type === 'ventas',
+                    pointRadius: 6,
                     pointHoverRadius: 8
                 }]
             },
@@ -260,14 +258,28 @@ class ReportesManager {
         body.innerHTML = '';
 
         if (type === 'ventas' || type === 'compras') {
+            const amountColor = (type === 'ventas') ? 'text-green-600' : 'text-red-600';
             headersRow.innerHTML = `<th>Fecha</th><th>Transacciones</th><th>Monto Total</th>`;
             data.forEach(row => {
                 body.innerHTML += `<tr class="hover:bg-gray-50">
                     <td class="p-3 border-b">${row.fecha}</td>
-                    <td class="p-3 border-b">${row.transacciones}</td> <td class="p-3 border-b font-bold text-green-600">Bs. ${row.total.toLocaleString('es-VE', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 border-b">${row.transacciones}</td> 
+                    <td class="p-3 border-b font-bold ${amountColor}">Bs. ${row.total.toLocaleString('es-VE', {minimumFractionDigits: 2})}</td>
+                </tr>`;
+            });
+        } else if (type === 'inventario') {
+            // [MODIFICACIÓN] Ahora con columna TOTAL
+            headersRow.innerHTML = `<th>Producto</th><th>Stock</th><th>Costo Unit.</th><th>Total</th>`;
+            data.forEach(row => {
+                body.innerHTML += `<tr class="hover:bg-gray-50">
+                    <td class="p-3 border-b">${row.nombre}</td>
+                    <td class="p-3 border-b font-bold text-gray-800">${row.stock} ${row.unidad_medida || ''}</td>
+                    <td class="p-3 border-b text-gray-600">Bs. ${parseFloat(row.costo_compra || 0).toLocaleString('es-VE', {minimumFractionDigits: 2})}</td>
+                    <td class="p-3 border-b font-bold text-green-600">Bs. ${parseFloat(row.valor_total || 0).toLocaleString('es-VE', {minimumFractionDigits: 2})}</td>
                 </tr>`;
             });
         } else {
+            // Stock Mínimo
             headersRow.innerHTML = `<th>Producto</th><th>Stock</th><th>Estado</th>`;
             data.forEach(row => {
                 const estado = row.stock <= 0 ? 'Agotado' : (row.minimo && row.stock <= row.minimo ? 'Crítico' : 'Normal');
@@ -293,14 +305,36 @@ class ReportesManager {
         const doc = new jsPDF();
         doc.text(`REPORTE DE ${this.currentReportType.toUpperCase()}`, 14, 20);
         
-        const body = this.currentTableData.map(row => {
-            if (this.currentReportType === 'ventas' || this.currentReportType === 'compras') {
-                return [row.fecha, row.transacciones, `Bs. ${row.total.toFixed(2)}`];
-            }
-            return [row.producto || row.nombre, row.stock, row.estado || ''];
-        });
+        let head = [];
+        let body = [];
+
+        if (this.currentReportType === 'ventas' || this.currentReportType === 'compras') {
+            head = [['Fecha', 'Transacciones', 'Monto Total']];
+            body = this.currentTableData.map(row => [
+                row.fecha, 
+                row.transacciones, 
+                `Bs. ${row.total.toFixed(2)}`
+            ]);
+        } else if (this.currentReportType === 'inventario') {
+            // [MODIFICACIÓN] PDF de Inventario con Total
+            head = [['Producto', 'Stock', 'Costo Unit.', 'Total']];
+            body = this.currentTableData.map(row => [
+                row.nombre, 
+                `${row.stock} ${row.unidad_medida || ''}`, 
+                `Bs. ${parseFloat(row.costo_compra || 0).toFixed(2)}`,
+                `Bs. ${parseFloat(row.valor_total || 0).toFixed(2)}`
+            ]);
+        } else {
+            // Stock Mínimo
+            head = [['Producto', 'Stock', 'Estado']];
+            body = this.currentTableData.map(row => [
+                row.producto || row.nombre, 
+                row.stock, 
+                row.estado
+            ]);
+        }
         
-        doc.autoTable({ head: [['Columna 1', 'Columna 2', 'Columna 3']], body: body, startY: 30 });
+        doc.autoTable({ head: head, body: body, startY: 30 });
         doc.save(`reporte_${this.currentReportType}.pdf`);
     }
 
